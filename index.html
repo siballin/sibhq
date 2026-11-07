@@ -1,0 +1,987 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0;font:14px system-ui,sans-serif}img{max-width:100%}[hidden]{display:none!important}</style></head><body>
+<title>sibhq</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@600;800;900&family=Instrument+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
+<style>
+/* Layout: cable-guide shell — channel rail on the left (strip on phones), guide grid + tiles in the main pane. */
+:root{
+  --bg:#ECEEF3; --surface:#FFFFFF; --surface-2:#E2E5EC; --ink:#11131A; --ink-2:#4B5165; --ink-3:#7A8094; --line:#D3D7E1;
+  --ch-sports:#D9480F; --ch-betting:#2B8A3E; --ch-hiphop:#A07800; --ch-kpop:#C2255C; --ch-movies:#364FC7; --ch-anime:#6741D9; --ch-games:#0B7285;
+  --good:#2B8A3E; --bad:#C92A2A; --warn:#B35C00;
+  --scrim:rgba(17,19,26,.45); --shadow:0 10px 30px rgba(17,19,26,.14);
+  --f-display:"Big Shoulders Display","Arial Narrow",Impact,sans-serif;
+  --f-body:"Instrument Sans",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --f-mono:"IBM Plex Mono",ui-monospace,Menlo,Consolas,monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#0C0E13; --surface:#151821; --surface-2:#1D212C; --ink:#ECEEF4; --ink-2:#A2A8BB; --ink-3:#6E7488; --line:#2A2F3B;
+  --ch-sports:#FF7A3D; --ch-betting:#51CF66; --ch-hiphop:#FCC419; --ch-kpop:#F06595; --ch-movies:#748FFC; --ch-anime:#9775FA; --ch-games:#3BC9DB;
+  --good:#51CF66; --bad:#FF6B6B; --warn:#FFA94D; --scrim:rgba(0,0,0,.6); --shadow:0 10px 30px rgba(0,0,0,.5); color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0C0E13; --surface:#151821; --surface-2:#1D212C; --ink:#ECEEF4; --ink-2:#A2A8BB; --ink-3:#6E7488; --line:#2A2F3B;
+  --ch-sports:#FF7A3D; --ch-betting:#51CF66; --ch-hiphop:#FCC419; --ch-kpop:#F06595; --ch-movies:#748FFC; --ch-anime:#9775FA; --ch-games:#3BC9DB;
+  --good:#51CF66; --bad:#FF6B6B; --warn:#FFA94D; --scrim:rgba(0,0,0,.6); --shadow:0 10px 30px rgba(0,0,0,.5); color-scheme:dark}
+
+*{box-sizing:border-box}
+html,body{min-height:100%}
+body{background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:15px;line-height:1.5;-webkit-font-smoothing:antialiased}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:30;background:var(--surface)}
+a{color:inherit}
+button,input,select,textarea{font:inherit;color:inherit}
+:focus-visible{outline:2px solid var(--ink);outline-offset:2px}
+h1,h2,h3{text-wrap:balance;margin:0}
+.num,.mono{font-family:var(--f-mono);font-variant-numeric:tabular-nums}
+
+/* top bar */
+.top{position:sticky;top:env(safe-area-inset-top,0px);z-index:20;background:var(--surface);border-bottom:1px solid var(--line)}
+.top-in{display:flex;align-items:center;gap:14px;padding-block:10px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+.brand{display:flex;align-items:baseline;gap:8px;text-decoration:none;flex:none}
+.brand b{font-family:var(--f-display);font-weight:900;font-size:26px;letter-spacing:.01em;text-transform:uppercase;line-height:1}
+.brand .bars{display:inline-flex;gap:2px;height:18px;align-self:center}
+.brand .bars i{width:5px;border-radius:1px}
+.search{flex:1;min-width:0;position:relative;max-width:560px}
+.search input{width:100%;height:38px;border-radius:8px;border:1px solid var(--line);background:var(--surface-2);padding:0 12px 0 34px}
+.search svg{position:absolute;left:10px;top:11px;width:16px;height:16px;stroke:var(--ink-3);fill:none;stroke-width:2}
+.clock{font-family:var(--f-mono);font-size:13px;color:var(--ink-2);flex:none;text-align:right;line-height:1.25}
+.sync{font-size:11px;color:var(--ink-3)}
+.sync.on{color:var(--good)}
+
+.shell{display:grid;grid-template-columns:220px minmax(0,1fr);gap:0}
+.rail{position:sticky;top:calc(59px + env(safe-area-inset-top,0px));align-self:start;height:calc(100vh - 59px);overflow:auto;border-right:1px solid var(--line);padding:14px 10px 30px max(10px,env(safe-area-inset-left,0px));display:flex;flex-direction:column;gap:2px}
+.rail .lbl{font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--ink-3);padding:12px 10px 4px;font-weight:600}
+.rail a{display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:8px;text-decoration:none;color:var(--ink-2);font-weight:500}
+.rail a:hover{background:var(--surface-2);color:var(--ink)}
+.rail a[aria-current]{background:var(--surface);color:var(--ink);box-shadow:inset 0 0 0 1px var(--line)}
+.chno{font-family:var(--f-display);font-weight:800;font-size:15px;width:30px;height:22px;display:grid;place-items:center;border-radius:4px;color:#fff;background:var(--c,var(--ink-2));flex:none;letter-spacing:.02em}
+.rail .ico{width:30px;display:grid;place-items:center;flex:none}
+.rail .ico svg{width:17px;height:17px;stroke:currentColor;fill:none;stroke-width:2}
+
+main{min-width:0;padding-block:22px 80px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+.wrap{max-width:1180px;margin:0 auto;display:flex;flex-direction:column;gap:26px}
+
+/* page head */
+.phead{display:flex;align-items:flex-end;gap:16px;flex-wrap:wrap;justify-content:space-between}
+.phead .t{display:flex;align-items:center;gap:12px}
+.phead .chno{width:auto;padding:0 8px;height:30px;font-size:19px}
+.phead h1{font-family:var(--f-display);font-weight:900;font-size:clamp(34px,5vw,52px);line-height:.95;text-transform:uppercase;letter-spacing:.005em}
+.phead p{margin:6px 0 0;color:var(--ink-2);max-width:62ch}
+.acts{display:flex;gap:8px;flex-wrap:wrap}
+
+.btn{display:inline-flex;align-items:center;gap:6px;height:36px;padding:0 14px;border-radius:8px;border:1px solid var(--line);background:var(--surface);cursor:pointer;font-weight:600;font-size:14px;text-decoration:none;white-space:nowrap}
+.btn:hover{background:var(--surface-2)}
+.btn.pri{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.btn.pri:hover{opacity:.88}
+.btn.ch{background:var(--c);border-color:var(--c);color:#fff}
+.btn.sm{height:28px;padding:0 10px;font-size:13px;border-radius:6px}
+.btn.ghost{border-color:transparent;background:transparent}
+.btn.ghost:hover{background:var(--surface-2)}
+.btn[disabled]{opacity:.5;cursor:wait}
+.chip{display:inline-flex;align-items:center;gap:6px;height:30px;padding:0 12px;border-radius:999px;border:1px solid var(--line);background:var(--surface);cursor:pointer;font-size:13px;font-weight:600;color:var(--ink-2)}
+.chip[aria-pressed="true"]{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.chip .dot{width:8px;height:8px;border-radius:50%;background:var(--c)}
+.chips{display:flex;gap:6px;flex-wrap:wrap}
+
+.sec{display:flex;flex-direction:column;gap:12px}
+.sec>h2,.sh{font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-3);font-weight:700;display:flex;align-items:center;gap:10px;justify-content:space-between}
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:12px}
+.pad{padding:16px}
+.muted{color:var(--ink-2)}
+.faint{color:var(--ink-3)}
+.small{font-size:13px}
+.tag{display:inline-flex;align-items:center;height:20px;padding:0 7px;border-radius:4px;font-size:11px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;background:var(--surface-2);color:var(--ink-2)}
+.tag.c{background:color-mix(in srgb,var(--c) 16%,transparent);color:var(--c)}
+.empty{padding:22px;text-align:center;color:var(--ink-3);font-size:14px;border:1px dashed var(--line);border-radius:10px}
+
+/* banner */
+.banner{display:flex;gap:12px;align-items:center;flex-wrap:wrap;padding:12px 14px;border-radius:10px;background:var(--surface);border:1px solid var(--line);font-size:14px}
+.banner b{font-weight:700}
+.banner .sp{flex:1;min-width:200px}
+
+/* tiles */
+.tiles{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:12px}
+.tile{position:relative;background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:14px 14px 14px 18px;display:flex;flex-direction:column;gap:6px;min-width:0;overflow:hidden}
+.tile::before{content:"";position:absolute;left:0;top:0;bottom:0;width:4px;background:var(--c)}
+.tile .k{font-size:11px;letter-spacing:.12em;text-transform:uppercase;font-weight:700;color:var(--c)}
+.tile .v{font-weight:700;font-size:17px;line-height:1.25;overflow-wrap:anywhere}
+.tile .s{font-size:13px;color:var(--ink-2)}
+.tile .row{display:flex;gap:8px;align-items:center;margin-top:auto;padding-top:6px;flex-wrap:wrap}
+
+.tonight{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:16px;align-items:center;padding:18px 20px;border-radius:14px;background:var(--ink);color:var(--bg)}
+.tonight h2{font-family:var(--f-display);font-weight:900;text-transform:uppercase;font-size:30px;line-height:1}
+.tonight p{margin:4px 0 0;opacity:.75;font-size:14px}
+.tonight .btn{background:var(--bg);color:var(--ink);border-color:var(--bg)}
+.pick{display:flex;gap:14px;align-items:center;margin-top:12px;grid-column:1/-1;background:color-mix(in srgb,var(--bg) 10%,transparent);border-radius:10px;padding:12px}
+.pick .cover{width:56px;flex:none}
+
+/* guide grid */
+.guide{overflow-x:auto;border:1px solid var(--line);border-radius:12px;background:var(--surface)}
+.guide table{border-collapse:collapse;width:100%;min-width:720px}
+.guide th,.guide td{border-bottom:1px solid var(--line);padding:10px 12px;text-align:left;vertical-align:top;font-size:14px}
+.guide thead th{font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-3);background:var(--surface-2);font-weight:700}
+.guide tbody tr:last-child td,.guide tbody tr:last-child th{border-bottom:0}
+.guide tbody th{width:150px;white-space:nowrap}
+.guide tbody th a{display:flex;gap:8px;align-items:center;text-decoration:none;font-weight:700}
+.guide td{border-left:1px solid var(--line)}
+.slot b{display:block;font-weight:600;line-height:1.3}
+.slot span{font-size:12px;color:var(--ink-3)}
+.guide td.now{background:color-mix(in srgb,var(--c) 7%,transparent)}
+
+/* lists & cards */
+.list{display:flex;flex-direction:column}
+.li{display:flex;gap:12px;align-items:center;padding:10px 14px;border-top:1px solid var(--line);min-width:0}
+.li:first-child{border-top:0}
+.li .main{flex:1;min-width:0}
+.li .main b{display:block;font-weight:600;overflow-wrap:anywhere}
+.li .main span{font-size:13px;color:var(--ink-2)}
+.li .end{display:flex;gap:6px;align-items:center;flex:none}
+.grid2{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}
+.grid3{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px}
+.cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:14px}
+.card{display:flex;flex-direction:column;gap:6px;cursor:pointer;background:none;border:0;padding:0;text-align:left;min-width:0}
+.card .meta{font-size:12px;color:var(--ink-2)}
+.card b{font-weight:600;line-height:1.25;overflow-wrap:anywhere}
+.cover{aspect-ratio:2/3;max-width:100%;border-radius:8px;position:relative;overflow:hidden;display:flex;flex-direction:column;justify-content:flex-end;padding:10px;color:#fff;
+  background:linear-gradient(165deg,hsl(var(--h) 52% 46%),hsl(calc(var(--h) + 50) 58% 18%));box-shadow:inset 0 0 0 1px rgba(255,255,255,.08)}
+.cover::after{content:"";position:absolute;inset:0;background:repeating-linear-gradient(0deg,rgba(255,255,255,.04) 0 1px,transparent 1px 3px);pointer-events:none}
+.cover .ct{font-family:var(--f-display);font-weight:800;text-transform:uppercase;font-size:20px;line-height:.95;text-shadow:0 1px 8px rgba(0,0,0,.35);overflow-wrap:anywhere}
+.cover .cy{font-family:var(--f-mono);font-size:11px;opacity:.8;margin-top:4px}
+.cover.sq{aspect-ratio:1}
+.cover.wide{aspect-ratio:16/9}
+.cover .badge{position:absolute;top:8px;right:8px;background:rgba(0,0,0,.55);border-radius:4px;padding:2px 6px;font-family:var(--f-mono);font-size:12px;font-weight:600}
+
+.bar{height:6px;border-radius:99px;background:var(--surface-2);overflow:hidden}
+.bar i{display:block;height:100%;background:var(--c);border-radius:99px}
+
+/* stats */
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px}
+.stat{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:12px 14px}
+.stat .k{font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--ink-3);font-weight:700}
+.stat .v{font-family:var(--f-mono);font-size:24px;font-weight:600;font-variant-numeric:tabular-nums;margin-top:2px}
+.pos{color:var(--good)} .neg{color:var(--bad)}
+
+/* tables */
+.tw{overflow-x:auto;border:1px solid var(--line);border-radius:12px;background:var(--surface)}
+table.t{border-collapse:collapse;width:100%;font-size:14px}
+table.t th{font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-3);text-align:left;padding:9px 12px;background:var(--surface-2);font-weight:700;white-space:nowrap}
+table.t td{padding:9px 12px;border-top:1px solid var(--line);vertical-align:middle}
+table.t td.r,table.t th.r{text-align:right}
+table.t tr.sub td{background:var(--bg)}
+
+/* chart */
+.chart svg{display:block;width:100%;height:auto}
+.chart .gl{stroke:var(--line);stroke-width:1}
+.chart .ax{fill:var(--ink-3);font-family:var(--f-mono);font-size:11px}
+.chart .zero{stroke:var(--ink-3);stroke-dasharray:3 3}
+
+/* calendar */
+.cal{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));border:1px solid var(--line);border-radius:12px;overflow:hidden;background:var(--surface)}
+.cal .dow{font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--ink-3);padding:8px;background:var(--surface-2);font-weight:700}
+.cal .day{min-height:104px;padding:6px;border-top:1px solid var(--line);border-left:1px solid var(--line);display:flex;flex-direction:column;gap:3px;min-width:0;cursor:pointer;background:none;text-align:left;border-right:0;border-bottom:0;font-size:inherit}
+.cal .day:nth-child(7n+1){border-left:0}
+.cal .day.out{opacity:.4}
+.cal .day .dn{font-family:var(--f-mono);font-size:12px;color:var(--ink-2)}
+.cal .day.today .dn{background:var(--ink);color:var(--bg);border-radius:4px;padding:0 5px;align-self:flex-start}
+.cal .day.sel{box-shadow:inset 0 0 0 2px var(--ink)}
+.ev{font-size:12px;line-height:1.25;padding:2px 5px;border-radius:4px;background:color-mix(in srgb,var(--c) 15%,transparent);color:var(--ink);border-left:3px solid var(--c);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.more{font-size:11px;color:var(--ink-3)}
+.dots{display:none;gap:3px;flex-wrap:wrap}
+.dots i{width:6px;height:6px;border-radius:50%;background:var(--c)}
+.week{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:8px}
+.wcol{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:8px;display:flex;flex-direction:column;gap:6px;min-height:220px;min-width:0}
+.wcol h3{font-size:13px;font-weight:700}
+.wcol.today{border-color:var(--ink)}
+.agenda .ad{font-family:var(--f-display);font-weight:800;text-transform:uppercase;font-size:20px;padding:14px 14px 4px}
+.cd{font-family:var(--f-mono);font-size:12px;color:var(--ink-2);white-space:nowrap}
+
+/* modal */
+.scrim{position:fixed;inset:0;background:var(--scrim);z-index:50;display:flex;align-items:flex-start;justify-content:center;padding:max(5vh,calc(env(safe-area-inset-top,0px) + 12px)) max(12px,env(safe-area-inset-right,0px)) 12px max(12px,env(safe-area-inset-left,0px));overflow:auto}
+.modal{background:var(--surface);border-radius:14px;width:min(640px,100%);box-shadow:var(--shadow);border:1px solid var(--line)}
+.modal header{display:flex;align-items:center;gap:10px;padding:14px 16px;border-bottom:1px solid var(--line)}
+.modal header h2{font-family:var(--f-display);font-weight:800;text-transform:uppercase;font-size:24px;flex:1;line-height:1}
+.modal .body{padding:16px;display:flex;flex-direction:column;gap:14px}
+.modal footer{display:flex;gap:8px;justify-content:flex-end;padding:12px 16px;border-top:1px solid var(--line);flex-wrap:wrap}
+.modal footer .l{margin-right:auto}
+.form{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+.fld{display:flex;flex-direction:column;gap:4px;min-width:0}
+.fld.full{grid-column:1/-1}
+.fld label{font-size:12px;font-weight:600;color:var(--ink-2)}
+.fld input,.fld select,.fld textarea{height:38px;border-radius:8px;border:1px solid var(--line);background:var(--bg);padding:0 10px;width:100%;min-width:0}
+.fld textarea{height:auto;min-height:90px;padding:8px 10px;font-family:var(--f-mono);font-size:13px;line-height:1.5}
+.fld .hint{font-size:12px;color:var(--ink-3)}
+.fld.cb{flex-direction:row;align-items:center;gap:8px}
+.fld.cb input{width:18px;height:18px}
+.ask{display:flex;gap:8px;align-items:center;padding:10px 12px;border-radius:10px;background:var(--surface-2);flex-wrap:wrap;font-size:13px}
+.ask .sp{flex:1;min-width:160px;color:var(--ink-2)}
+.err{color:var(--bad);font-size:13px}
+
+/* search overlay */
+.sres{position:absolute;left:0;right:0;top:44px;background:var(--surface);border:1px solid var(--line);border-radius:12px;box-shadow:var(--shadow);max-height:70vh;overflow:auto;z-index:40}
+.sres .grp{padding:8px 12px 2px;font-size:11px;letter-spacing:.12em;text-transform:uppercase;font-weight:700;color:var(--c)}
+.sres button.hit{display:flex;width:100%;gap:10px;align-items:center;padding:8px 12px;background:none;border:0;text-align:left;cursor:pointer}
+.sres button.hit:hover,.sres button.hit:focus-visible{background:var(--surface-2)}
+.sres .hit span{font-size:12px;color:var(--ink-3)}
+
+/* kpop profile */
+.prof{display:grid;grid-template-columns:200px minmax(0,1fr);gap:20px;align-items:start}
+.facts{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px 18px;margin-top:10px}
+.facts div span{display:block;font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-3);font-weight:700}
+.facts div b{font-weight:600}
+.trk{display:flex;flex-wrap:wrap;gap:6px}
+.trk button{border:1px solid var(--line);background:var(--bg);border-radius:6px;padding:3px 8px;font-size:13px;cursor:pointer}
+.trk button[aria-pressed="true"]{border-color:var(--c);color:var(--c);font-weight:600}
+.star{color:var(--c)}
+
+.toast{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:10px 16px;border-radius:10px;font-size:14px;font-weight:600;z-index:60;box-shadow:var(--shadow)}
+.kbd{font-family:var(--f-mono);font-size:11px;border:1px solid var(--line);border-radius:4px;padding:0 4px;color:var(--ink-3)}
+
+@media (max-width:900px){
+  .grid3{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .shell{grid-template-columns:minmax(0,1fr)}
+  .rail{position:sticky;top:calc(58px + env(safe-area-inset-top,0px));z-index:15;height:auto;flex-direction:row;overflow-x:auto;border-right:0;border-bottom:1px solid var(--line);background:var(--bg);padding:8px max(16px,env(safe-area-inset-right,0px)) 8px max(16px,env(safe-area-inset-left,0px));gap:4px}
+  .rail .lbl{display:none}
+  .rail a{flex:none;padding:6px 10px;font-size:14px}
+  .rail a .ico{width:auto}
+}
+@media (max-width:640px){
+  .clock{display:none}
+  .brand b{font-size:21px}
+  .grid2,.grid3{grid-template-columns:minmax(0,1fr)}
+  .form{grid-template-columns:minmax(0,1fr)}
+  .prof{grid-template-columns:minmax(0,1fr)}
+  .prof .cover{max-width:180px}
+  .cal .day{min-height:58px}
+  .cal .day .ev,.cal .day .more{display:none}
+  .cal .day .dots{display:flex}
+  .week{grid-template-columns:minmax(0,1fr)}
+  .wcol{min-height:0}
+  .tonight{grid-template-columns:minmax(0,1fr)}
+  .cards{grid-template-columns:repeat(auto-fill,minmax(130px,1fr))}
+}
+@media (prefers-reduced-motion:no-preference){
+  .tile,.card .cover{transition:transform .15s ease}
+  .card:hover .cover{transform:translateY(-2px)}
+}
+</style>
+
+<header class="top"><div class="top-in">
+  <a class="brand" href="#home" aria-label="sibhq home">
+    <span class="bars" aria-hidden="true"><i style="background:var(--ch-sports)"></i><i style="background:var(--ch-betting)"></i><i style="background:var(--ch-hiphop)"></i><i style="background:var(--ch-kpop)"></i><i style="background:var(--ch-movies)"></i><i style="background:var(--ch-anime)"></i><i style="background:var(--ch-games)"></i></span>
+    <b>sibhq</b>
+  </a>
+  <div class="search">
+    <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-4-4"/></svg>
+    <input id="q" type="search" placeholder="Search players, groups, movies, anime, games…" autocomplete="off" aria-label="Search all channels">
+    <div id="sres" class="sres" hidden></div>
+  </div>
+  <div class="clock"><div id="clk" class="num"></div><div id="sync" class="sync">Saved on this device</div></div>
+</div></header>
+
+<div class="shell">
+  <nav class="rail" id="rail" aria-label="Channels"></nav>
+  <main><div class="wrap" id="view"></div></main>
+</div>
+<div id="modal-root"></div>
+<div id="toast" class="toast" hidden></div>
+
+<script>
+/* ================= utilities ================= */
+const $=(s,el=document)=>el.querySelector(s);
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const uid=()=>Math.random().toString(36).slice(2,10);
+const today=()=>{const d=new Date();d.setHours(0,0,0,0);return d};
+const iso=d=>`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+const parseD=s=>{if(!s)return null;const [y,m,d]=String(s).slice(0,10).split('-').map(Number);if(!y)return null;return new Date(y,(m||1)-1,d||1)};
+const addDays=(d,n)=>{const x=new Date(d);x.setDate(x.getDate()+n);return x};
+const D=n=>iso(addDays(today(),n));
+const DT=(n,t)=>D(n)+'T'+t;
+const diffDays=s=>Math.round((parseD(s)-today())/864e5);
+const rel=s=>{if(!s)return '';const n=diffDays(s);if(n===0)return 'Today';if(n===1)return 'Tomorrow';if(n===-1)return 'Yesterday';return n>0?`in ${n} days`:`${-n} days ago`};
+const fmtD=s=>{const d=parseD(s);return d?d.toLocaleDateString(undefined,{month:'short',day:'numeric'}):''};
+const fmtDY=s=>{const d=parseD(s);return d?d.toLocaleDateString(undefined,{month:'short',day:'numeric',year:'numeric'}):''};
+const fmtT=s=>{if(!s||s.length<16)return '';const [h,m]=s.slice(11,16).split(':').map(Number);const d=new Date();d.setHours(h,m);return d.toLocaleTimeString(undefined,{hour:'numeric',minute:'2-digit'})};
+const hue=s=>{let h=0;for(const c of String(s))h=(h*31+c.charCodeAt(0))%360;return h};
+const money=n=>(n<0?'−$':'$')+Math.abs(n).toFixed(2);
+const sgn=(n,d=1)=>(n>0?'+':n<0?'−':'')+Math.abs(n).toFixed(d);
+const shuffle=a=>{a=a.slice();for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a};
+const list=v=>Array.isArray(v)?v:String(v||'').split(',').map(s=>s.trim()).filter(Boolean);
+const age=b=>{const d=parseD(b);if(!d)return '';const t=today();let a=t.getFullYear()-d.getFullYear();if(t<new Date(t.getFullYear(),d.getMonth(),d.getDate()))a--;return a};
+function toast(m){const t=$('#toast');t.textContent=m;t.hidden=false;clearTimeout(toast.t);toast.t=setTimeout(()=>t.hidden=true,2400)}
+const cover=(title,sub,cls='',badge='')=>`<div class="cover ${cls}" style="--h:${hue(title)}">${badge?`<span class="badge">${esc(badge)}</span>`:''}<div class="ct">${esc(title)}</div>${sub?`<div class="cy">${esc(sub)}</div>`:''}</div>`;
+
+/* ================= channels ================= */
+const CH=[
+  {key:'sports',num:1,name:'Sports'},{key:'betting',num:2,name:'Betting'},{key:'hiphop',num:3,name:'Hip-Hop'},
+  {key:'kpop',num:4,name:'K-Pop'},{key:'movies',num:5,name:'Movies'},{key:'anime',num:6,name:'Anime'},{key:'games',num:7,name:'Video Games'}];
+const chOf=k=>CH.find(c=>c.key===k);
+const cvar=k=>`var(--ch-${k})`;
+const chno=k=>{const c=chOf(k);return `<span class="chno" style="--c:${cvar(k)}">${String(c.num).padStart(2,'0')}</span>`};
+const LEAGUES=['NBA','NFL','MLB','NHL','NCAAB','NCAAF','Soccer'];
+const ESPN={NBA:'nba',NFL:'nfl',MLB:'mlb',NHL:'nhl',NCAAB:'mens-college-basketball',NCAAF:'college-football',Soccer:'soccer'};
+const DAYS=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+
+/* ================= state & example data ================= */
+const KEYS=['sports','betting','hiphop','kpop','movies','anime','games','events'];
+function examples(){
+  const ex={ex:true};
+  // seeded bet history over ~75 days
+  let s=7;const r=()=>{s=(s*9301+49297)%233280;return s/233280};
+  const picks=[['NBA','Spurs ML'],['NBA','Wembanyama o24.5 pts'],['NFL','Eagles −3.5'],['NBA','Lakers/Spurs o228.5'],['NHL','Devils ML'],['NFL','Jets +6.5'],['NBA','Knicks −4'],['Soccer','Arsenal ML'],['NCAAF','Rutgers +10'],['NBA','Fox o7.5 ast']];
+  const bets=[];
+  for(let i=0;i<34;i++){const p=picks[Math.floor(r()*picks.length)];const odds=[-110,-115,-120,+105,+120,+145,-130,+170][Math.floor(r()*8)];
+    const res=r()<.53?'win':(r()<.08?'push':'loss');bets.push({id:uid(),...ex,date:D(-75+Math.floor(i*2.15)),sport:p[0],desc:p[1],odds,stake:[10,20,25,15][Math.floor(r()*4)],result:res,book:['FanDuel','DraftKings','BetMGM'][Math.floor(r()*3)],lines:[]})}
+  bets.push({id:uid(),...ex,date:D(0),sport:'NBA',desc:'Spurs −2.5 vs Lakers',odds:-110,stake:25,result:'open',book:'FanDuel',lines:[{t:D(-2),odds:-105},{t:D(-1),odds:-110},{t:D(0),odds:-118}]});
+  bets.push({id:uid(),...ex,date:D(0),sport:'NFL',desc:'Giants +7',odds:-108,stake:20,result:'open',book:'DraftKings',lines:[{t:D(-3),odds:-110},{t:D(0),odds:-104}]});
+  bets.push({id:uid(),...ex,date:D(-1),sport:'NHL',desc:'Devils/Rangers u6.5',odds:+102,stake:15,result:'open',book:'BetMGM',lines:[]});
+  return {
+    sports:{teams:[{id:uid(),...ex,name:'San Antonio Spurs',league:'NBA'},{id:uid(),...ex,name:'New York Giants',league:'NFL'},{id:uid(),...ex,name:'New Jersey Devils',league:'NHL'}],
+      games:[
+        {id:uid(),...ex,league:'NBA',away:'Los Angeles Lakers',home:'San Antonio Spurs',date:DT(0,'20:00'),status:'scheduled'},
+        {id:uid(),...ex,league:'NFL',away:'New York Giants',home:'Chicago Bears',date:DT(1,'13:00'),status:'scheduled'},
+        {id:uid(),...ex,league:'NHL',away:'New Jersey Devils',home:'New York Rangers',date:DT(2,'19:00'),status:'scheduled'},
+        {id:uid(),...ex,league:'NBA',away:'San Antonio Spurs',home:'Denver Nuggets',date:DT(4,'21:00'),status:'scheduled'},
+        {id:uid(),...ex,league:'NBA',away:'Houston Rockets',home:'San Antonio Spurs',date:DT(-2,'20:00'),status:'final',awayScore:109,homeScore:118},
+        {id:uid(),...ex,league:'NFL',away:'Philadelphia Eagles',home:'New York Giants',date:DT(-6,'13:00'),status:'final',awayScore:27,homeScore:20},
+        {id:uid(),...ex,league:'NHL',away:'Boston Bruins',home:'New Jersey Devils',date:DT(-3,'19:00'),status:'final',awayScore:2,homeScore:4},
+        {id:uid(),...ex,league:'NBA',away:'San Antonio Spurs',home:'Phoenix Suns',date:DT(-5,'22:00'),status:'final',awayScore:121,homeScore:115}]},
+    betting:{unit:25,bets},
+    hiphop:{artists:[{id:uid(),...ex,name:'Kendrick Lamar',underground:false},{id:uid(),...ex,name:'Clipse',underground:false},{id:uid(),...ex,name:'billy woods',underground:true},{id:uid(),...ex,name:'MIKE',underground:true},{id:uid(),...ex,name:'Earl Sweatshirt',underground:false}],
+      releases:[
+        {id:uid(),...ex,artist:'Kendrick Lamar',title:'GNX',type:'Album',date:'2024-11-22',status:'heard',rating:9,genre:'West Coast'},
+        {id:uid(),...ex,artist:'Clipse',title:'Let God Sort Em Out',type:'Album',date:'2025-07-11',status:'heard',rating:9,genre:'Coke rap'},
+        {id:uid(),...ex,artist:'billy woods',title:'GOLLIWOG',type:'Album',date:'2025-05-09',status:'queued',genre:'Abstract'},
+        {id:uid(),...ex,artist:'MIKE',title:'Example: new MIKE tape',type:'Mixtape',date:D(3),status:'queued',genre:'Abstract'},
+        {id:uid(),...ex,artist:'Earl Sweatshirt',title:'Example: new Earl single',type:'Single',date:D(10),status:'queued',genre:'Abstract'}]},
+    kpop:{groups:[
+      {id:uid(),...ex,name:'NMIXX',agency:'JYP Entertainment',debut:'2022-02-22',fandom:'NSWER',followed:true,socials:['https://www.instagram.com/nmixx_official/','https://x.com/NMIXX_official','https://www.youtube.com/@NMIXXOfficial'],
+        members:[
+          {stage:'Lily',real:'Lily Jin Park',birthday:'2002-10-17',nationality:'Australian',position:'Main vocalist'},
+          {stage:'Haewon',real:'Oh Hae-won',birthday:'2003-02-25',nationality:'Korean',position:'Leader, vocalist'},
+          {stage:'Sullyoon',real:'Seol Yoon-a',birthday:'2004-01-26',nationality:'Korean',position:'Vocalist, visual'},
+          {stage:'Bae',real:'Bae Jin-sol',birthday:'2004-12-28',nationality:'Korean',position:'Vocalist'},
+          {stage:'Jiwoo',real:'Kim Ji-woo',birthday:'2005-04-13',nationality:'Korean',position:'Rapper, dancer'},
+          {stage:'Kyujin',real:'Jang Kyu-jin',birthday:'2006-05-26',nationality:'Korean',position:'Main dancer, maknae'}],
+        albums:[
+          {title:'Ad Mare',type:'Single album',date:'2022-02-22',tracks:['O.O','Tank'],rank:4,favs:['O.O']},
+          {title:'Expérgo',type:'EP',date:'2023-03-20',tracks:['Love Me Like This','Young, Dumb, Stupid'],rank:3,favs:['Love Me Like This']},
+          {title:'Fe3O4: Break',type:'EP',date:'2024-01-15',tracks:['Dash','Soñar (Breaker)'],rank:2,favs:['Dash']},
+          {title:'Fe3O4: Forward',type:'EP',date:'2025-03-17',tracks:['Know About Me','High Horse'],rank:1,favs:[]}],
+        comebacks:[{date:D(4),title:'Example comeback (placeholder date)',kind:'Comeback'},{date:D(19),title:'Example fan concert',kind:'Concert'}]},
+      {id:uid(),...ex,name:'IVE',agency:'Starship Entertainment',debut:'2021-12-01',fandom:'DIVE',followed:true,socials:[],
+        members:[{stage:'Gaeul'},{stage:'Yujin'},{stage:'Rei'},{stage:'Wonyoung'},{stage:'Liz'},{stage:'Leeseo'}].map(m=>({real:'',birthday:'',nationality:'',position:'',...m})),
+        albums:[{title:'Eleven',type:'Single album',date:'2021-12-01',tracks:['Eleven'],rank:1,favs:['Eleven']},{title:"I've IVE",type:'Album',date:'2023-04-10',tracks:['I AM','Kitsch'],rank:2,favs:[]}],
+        comebacks:[{date:D(12),title:'Example album release (placeholder)',kind:'Comeback'}]}]},
+    movies:{items:[
+      {id:uid(),...ex,title:'Dune: Part Two',year:2024,genres:['Sci-fi','Epic'],status:'watched',rating:9,audience:8.5,director:'Denis Villeneuve',cast:['Timothée Chalamet','Zendaya'],runtime:166,rewatches:1,rank:1,watched:D(-40),review:'Best IMAX experience in years.'},
+      {id:uid(),...ex,title:'Sinners',year:2025,genres:['Horror','Drama'],status:'watched',rating:8.5,audience:7.6,director:'Ryan Coogler',cast:['Michael B. Jordan'],runtime:137,rewatches:0,rank:2,watched:D(-12)},
+      {id:uid(),...ex,title:'Past Lives',year:2023,genres:['Drama','Romance'],status:'watched',rating:8,audience:7.8,director:'Celine Song',cast:['Greta Lee','Teo Yoo'],runtime:106,rewatches:0,rank:3,watched:D(-90)},
+      {id:uid(),...ex,title:'One Battle After Another',year:2025,genres:['Thriller','Drama'],status:'watchlist',director:'Paul Thomas Anderson',cast:['Leonardo DiCaprio'],runtime:162},
+      {id:uid(),...ex,title:'Perfect Days',year:2023,genres:['Drama'],status:'watchlist',director:'Wim Wenders',runtime:124},
+      {id:uid(),...ex,title:'Example: holiday premiere',year:2026,genres:['Sci-fi'],status:'watchlist',release:D(11)}]},
+    anime:{items:[
+      {id:uid(),...ex,title:'One Piece',episodes:1150,watched:42,epLength:24,airDay:0,status:'watching',genres:['Adventure','Action'],rating:9},
+      {id:uid(),...ex,title:'Frieren: Beyond Journey’s End',episodes:28,watched:28,epLength:24,status:'completed',genres:['Fantasy','Drama'],rating:10,finished:D(-20)},
+      {id:uid(),...ex,title:'Dandadan',episodes:24,watched:14,epLength:24,airDay:4,status:'watching',genres:['Action','Comedy','Supernatural'],rating:8},
+      {id:uid(),...ex,title:'Attack on Titan',episodes:25,watched:14,epLength:24,status:'watching',genres:['Action','Drama'],rating:9},
+      {id:uid(),...ex,title:'Vinland Saga',episodes:48,watched:0,epLength:24,status:'plan',genres:['Action','Drama','Historical']}]},
+    games:{items:[
+      {id:uid(),...ex,title:'Persona 5 Royal',platform:'PS5',genres:['JRPG'],status:'playing',hours:28,completion:31,rating:9,critic:95,achGot:12,achTotal:51},
+      {id:uid(),...ex,title:'Clair Obscur: Expedition 33',platform:'PC',genres:['RPG','Turn-based'],status:'backlog',hours:0,completion:0,critic:92},
+      {id:uid(),...ex,title:'Hades II',platform:'Switch 2',genres:['Roguelike','Action'],status:'backlog',hours:3,completion:5,critic:94},
+      {id:uid(),...ex,title:'Elden Ring',platform:'PS5',genres:['Action RPG','Open world'],status:'done',hours:112,completion:100,rating:10,critic:96,finished:D(-60),achGot:42,achTotal:42},
+      {id:uid(),...ex,title:'Example: winter release',platform:'PS5',genres:['Action'],status:'wishlist',release:D(13)}]},
+    events:[{id:uid(),...ex,date:D(6),title:'Fantasy draft night',channel:'sports'}],
+    meta:{examples:true}
+  };
+}
+const EMPTY=()=>({sports:{teams:[],games:[]},betting:{unit:25,bets:[]},hiphop:{artists:[],releases:[]},kpop:{groups:[]},movies:{items:[]},anime:{items:[]},games:{items:[]},events:[],meta:{}});
+let S=null;
+const LSK='seven-channels-v2';
+function loadLocal(){try{const j=localStorage.getItem(LSK);if(j)return JSON.parse(j)}catch(e){}return null}
+function saveLocal(){try{localStorage.setItem(LSK,JSON.stringify(S))}catch(e){}}
+S=loadLocal()||examples();
+for(const k of Object.keys(EMPTY()))if(S[k]==null)S[k]=EMPTY()[k];
+
+/* ================= sync (db per-person, private) ================= */
+const sync={db:null,uid:null,timers:{},writing:{},queued:{},sample:null};
+function setSync(t,on){const el=$('#sync');el.textContent=t;el.classList.toggle('on',!!on)}
+function save(...keys){
+  saveLocal();
+  if(!sync.db||!sync.uid)return;
+  for(const k of keys){clearTimeout(sync.timers[k]);sync.timers[k]=setTimeout(()=>flush(k),600)}
+}
+async function flush(k){
+  if(sync.writing[k]){sync.queued[k]=true;return}
+  sync.writing[k]=true;setSync('Syncing…');
+  try{await sync.db.doc(`data/users/${sync.uid}/${k}`).set({v:JSON.stringify(S[k]),at:Date.now()});setSync('Synced to your account',true)}
+  catch(e){setSync('Sync failed — saved on this device')}
+  finally{sync.writing[k]=false;if(sync.queued[k]){sync.queued[k]=false;flush(k)}}
+}
+async function initCaps(){
+  if(!window.claude||!window.claude.use)return;
+  claude.use('sample').then(s=>{sync.sample=s;if(s)render()}).catch(()=>{});
+  try{
+    const [db,user]=await Promise.all([claude.use('db'),claude.use('user')]);
+    if(!db||!user)return;
+    const id=await user.id(); if(!id)return;
+    sync.db=db;sync.uid=id;setSync('Connecting…');
+    const timer=setTimeout(()=>setSync('Account sync unreachable — saved on this device'),10000);
+    const keys=[...KEYS,'meta'];
+    const snaps=await Promise.all(keys.map(k=>db.doc(`data/users/${id}/${k}`).get().catch(()=>null)));
+    clearTimeout(timer);
+    const any=snaps.some(s=>s&&s.exists);
+    if(any){keys.forEach((k,i)=>{const s=snaps[i];if(s&&s.exists){try{S[k]=JSON.parse(s.data().v)}catch(e){}}});saveLocal();render()}
+    else if(!S.meta.examples){keys.forEach(k=>flush(k))}
+    setSync('Synced to your account',true);
+    keys.forEach(k=>db.doc(`data/users/${id}/${k}`).onSnapshot(snap=>{
+      if(!snap.exists||snap.metadata?.hasPendingWrites||sync.timers[k]&&sync.writing[k])return;
+      try{const v=JSON.parse(snap.data().v);if(JSON.stringify(v)!==JSON.stringify(S[k])){S[k]=v;saveLocal();render()}}catch(e){}
+    },()=>setSync('Sync paused — saved on this device')));
+  }catch(e){}
+}
+function commit(...keys){if(S.meta.examples){S.meta.examples='kept';keys=[...new Set([...keys,...KEYS,'meta'])]}save(...keys,'meta');render()}
+
+/* ================= Claude lookups ================= */
+async function askJSON(prompt){
+  if(!sync.sample)throw new Error('Claude lookups are not available in this view.');
+  try{return await sync.sample.json(prompt,{modelTier:'default'})}
+  catch(e){throw new Error(e?.code==='not_granted'?'Claude lookups were not allowed for this page.':e?.code==='rate_limited'?'Too many lookups right now. Try again in a minute.':'Claude could not answer that. Try again or fill it in yourself.')}
+}
+const CAVEAT='Details come from Claude’s knowledge and may be out of date — check anything recent.';
+const LOOKUP={
+  movie:t=>`Give facts about the film "${t}" as JSON only: {"title":string,"year":number,"genres":[up to 3 strings],"director":string,"cast":[up to 5 lead actors],"runtime":minutes number,"audience":approximate general audience rating out of 10 (one decimal)}. Use "" or null when unsure. Do not invent.`,
+  anime:t=>`Give facts about the anime "${t}" as JSON only: {"title":string,"episodes":number (total so far or planned),"epLength":minutes per episode,"genres":[up to 3],"season":string like "Fall 2024"}. Use null when unsure.`,
+  game:t=>`Give facts about the video game "${t}" as JSON only: {"title":string,"platform":main platforms comma-separated string,"genres":[up to 3],"critic":Metacritic-style critic score out of 100 or null,"release":"YYYY-MM-DD" or "","achTotal":number of trophies/achievements or null}. Do not invent.`,
+  release:t=>`Give facts about the hip-hop release "${t}" as JSON only: {"artist":string,"title":string,"type":"Album"|"EP"|"Single"|"Mixtape","date":"YYYY-MM-DD" or "","genre":short subgenre string}. Do not invent.`,
+  group:t=>`Give a profile of the K-pop group "${t}" as JSON only: {"name":string,"agency":string,"debut":"YYYY-MM-DD","fandom":string,"socials":[official URLs you are sure of],"members":[{"stage":string,"real":string,"birthday":"YYYY-MM-DD","nationality":string,"position":string}],"albums":[{"title":string,"type":string,"date":"YYYY-MM-DD","tracks":[title track and up to 3 notable tracks]}]}. Current members only. Use "" when unsure. Never invent future dates.`
+};
+
+/* ================= derived data ================= */
+const profit=b=>b.result==='win'?(b.odds>0?b.stake*b.odds/100:b.stake*100/Math.abs(b.odds)):b.result==='loss'?-b.stake:0;
+const implied=o=>o>0?100/(o+100):Math.abs(o)/(Math.abs(o)+100);
+const fmtOdds=o=>o==null||o===''?'—':(o>0?'+':'')+o;
+const isFollowedTeam=g=>S.sports.teams.some(t=>t.name===g.home||t.name===g.away);
+function allEvents(from,to){
+  const out=[];const inR=s=>{const d=parseD(s);return d&&d>=from&&d<=to};
+  S.sports.games.forEach(g=>{if(inR(g.date))out.push({date:g.date.slice(0,10),time:g.date,ch:'sports',title:`${g.away} @ ${g.home}`,sub:g.status==='final'?`Final ${g.awayScore}–${g.homeScore}`:`${g.league} · ${fmtT(g.date)}`,mine:isFollowedTeam(g)})});
+  S.hiphop.releases.forEach(r=>{if(inR(r.date))out.push({date:r.date,ch:'hiphop',title:`${r.artist} — ${r.title}`,sub:r.type})});
+  S.kpop.groups.forEach(g=>{
+    (g.comebacks||[]).forEach(c=>{if(inR(c.date))out.push({date:c.date,ch:'kpop',title:`${g.name}: ${c.title}`,sub:c.kind})});
+    if(g.followed){(g.members||[]).forEach(m=>{const b=parseD(m.birthday);if(!b)return;for(let y=from.getFullYear();y<=to.getFullYear();y++){const d=new Date(y,b.getMonth(),b.getDate());if(d>=from&&d<=to)out.push({date:iso(d),ch:'kpop',title:`${m.stage}’s birthday (${g.name})`,sub:`Turns ${y-b.getFullYear()}`})}});
+      const db=parseD(g.debut);if(db)for(let y=from.getFullYear();y<=to.getFullYear();y++){const d=new Date(y,db.getMonth(),db.getDate());if(d>=from&&d<=to&&y>db.getFullYear())out.push({date:iso(d),ch:'kpop',title:`${g.name} debut anniversary`,sub:`${y-db.getFullYear()} years`})}}
+  });
+  S.movies.items.forEach(m=>{if(inR(m.release))out.push({date:m.release,ch:'movies',title:m.title,sub:'Premiere'})});
+  S.games.items.forEach(g=>{if(inR(g.release))out.push({date:g.release,ch:'games',title:g.title,sub:`Release · ${g.platform||''}`})});
+  S.anime.items.forEach(a=>{if(a.status!=='watching'||a.airDay==null||a.airDay==='')return;let d=new Date(from);let n=0;
+    while(d<=to&&n<60){if(d.getDay()===Number(a.airDay))out.push({date:iso(d),ch:'anime',title:a.title,sub:'New episode'});d=addDays(d,1);n++}});
+  S.events.forEach(e=>{if(inR(e.date))out.push({date:e.date,ch:e.channel||'sports',title:e.title,sub:e.note||'Your event',custom:e.id})});
+  return out.sort((a,b)=>(a.time||a.date).localeCompare(b.time||b.date));
+}
+const gcal=e=>{const d=e.date.replace(/-/g,'');const n=iso(addDays(parseD(e.date),1)).replace(/-/g,'');
+  return `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${encodeURIComponent(e.title)}&dates=${d}/${n}&details=${encodeURIComponent((e.sub||'')+' — from sibhq')}`};
+
+/* ================= rail ================= */
+const ICONS={home:'<path d="M3 11 12 4l9 7v9a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"/>',calendar:'<rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/>',foryou:'<path d="M12 3l2.6 5.6 6 .7-4.5 4.1 1.2 6L12 16.4 6.7 19.4l1.2-6L3.4 9.3l6-.7z"/>'};
+function railHTML(v){
+  const a=(id,label,icon)=>`<a href="#${id}" ${v===id?'aria-current="page"':''}>${icon}<span>${label}</span></a>`;
+  return `<div class="lbl">Guide</div>${a('home','Home',`<span class="ico"><svg viewBox="0 0 24 24">${ICONS.home}</svg></span>`)}${a('calendar','Calendar',`<span class="ico"><svg viewBox="0 0 24 24">${ICONS.calendar}</svg></span>`)}${a('foryou','For You',`<span class="ico"><svg viewBox="0 0 24 24">${ICONS.foryou}</svg></span>`)}
+  <div class="lbl">Channels</div>${CH.map(c=>a(c.key,c.name,chno(c.key))).join('')}`;
+}
+
+/* ================= views ================= */
+const UI={cal:{mode:'month',cursor:today(),sel:iso(today()),filters:new Set(CH.map(c=>c.key))},league:'All',movieTab:'watchlist',kpopSel:null,betPeriod:'all',betOpen:null,tonight:null,odds:[{book:'FanDuel',odds:-110},{book:'DraftKings',odds:-105},{book:'BetMGM',odds:-112}],recs:null,recsErr:'',recsBusy:false};
+function head(key,title,sub,acts=''){return `<div class="phead"><div><div class="t">${key?chno(key):''}<h1>${esc(title)}</h1></div>${sub?`<p>${sub}</p>`:''}</div><div class="acts">${acts}</div></div>`}
+function exampleBanner(){if(S.meta.examples!==true)return '';return `<div class="banner"><span class="sp"><b>You’re looking at example data.</b> Teams, bets, lists and dates are samples so you can see every feature working. Edit anything to start making it yours.</span><button class="btn sm" data-act="clearEx">Clear examples</button><button class="btn sm ghost" data-act="keepEx">Keep them</button></div>`}
+
+/* ---------- HOME ---------- */
+function vHome(){
+  const now=new Date();const t0=today();
+  const nextGame=S.sports.games.filter(g=>g.status!=='final'&&new Date(g.date)>=addDays(t0,0)).sort((a,b)=>a.date.localeCompare(b.date)).sort((a,b)=>isFollowedTeam(b)-isFollowedTeam(a))[0];
+  const cbs=[];S.kpop.groups.forEach(g=>(g.comebacks||[]).forEach(c=>{if(diffDays(c.date)>=0)cbs.push({g,c})}));cbs.sort((a,b)=>a.c.date.localeCompare(b.c.date));
+  const relWin=S.hiphop.releases.filter(r=>r.date&&Math.abs(diffDays(r.date))<=14);
+  const nextRel=S.hiphop.releases.filter(r=>r.date&&diffDays(r.date)>=0).sort((a,b)=>a.date.localeCompare(b.date))[0];
+  const wl=S.movies.items.filter(m=>m.status==='watchlist');
+  const watching=S.anime.items.filter(a=>a.status==='watching');
+  const playing=S.games.items.filter(g=>g.status==='playing');
+  const open=S.betting.bets.filter(b=>b.result==='open');
+  const mStart=new Date(now.getFullYear(),now.getMonth(),1);
+  const monthP=S.betting.bets.filter(b=>b.result!=='open'&&parseD(b.date)>=mStart).reduce((s,b)=>s+profit(b),0);
+  const units=monthP/(S.betting.unit||25);
+  const tile=(k,label,v,s,row='',href=k)=>`<div class="tile" style="--c:${cvar(k)}"><div class="k">${label}</div><div class="v">${v}</div>${s?`<div class="s">${s}</div>`:''}<div class="row">${row}<a class="btn sm ghost" href="#${href}">Open</a></div></div>`;
+  const a=watching[0],gp=playing[0];
+  const tiles=[
+    tile('sports','Your teams',nextGame?`${esc(nextGame.away)} @ ${esc(nextGame.home)}`:'No upcoming games',nextGame?`${rel(nextGame.date)} · ${fmtT(nextGame.date)} · ${nextGame.league}`:'Add a game to see it here'),
+    tile('kpop','Upcoming comebacks',cbs[0]?`${esc(cbs[0].g.name)} — ${esc(cbs[0].c.kind)}`:'Nothing scheduled',cbs[0]?`${rel(cbs[0].c.date)} · ${fmtD(cbs[0].c.date)}`:'Add comeback dates to a group'),
+    tile('hiphop','New releases',`${relWin.length} release${relWin.length===1?'':'s'} this fortnight`,nextRel?`Next: ${esc(nextRel.artist)} — ${esc(nextRel.title)}, ${rel(nextRel.date)}`:'From artists you follow'),
+    tile('movies','Movie watchlist',`${wl.length} movie${wl.length===1?'':'s'} to watch`,wl[0]?`Top of the list: ${esc(wl[0].title)}`:'Add movies you want to see'),
+    tile('anime','Currently watching',a?esc(a.title):'Nothing in progress',a?`Episode ${a.watched} of ${a.episodes||'?'}${a.episodes?` · ${Math.round(a.watched/a.episodes*100)}%`:''}`:'',a?`<button class="btn sm ch" style="--c:${cvar('anime')}" data-act="epPlus" data-id="${a.id}">+1 episode</button>`:''),
+    tile('games','Currently playing',gp?esc(gp.title):'Nothing in progress',gp?`${gp.hours||0} hours played · ${gp.completion||0}% complete`:'',gp?`<button class="btn sm" data-act="hrPlus" data-id="${gp.id}">+1 hour</button>`:''),
+    tile('betting','Betting',`${open.length} open pick${open.length===1?'':'s'}`,`<span class="${units>=0?'pos':'neg'} num">${sgn(units)} units</span> this month · ${money(monthP)}`)];
+  // guide
+  const evs=allEvents(t0,addDays(t0,30));
+  const nextFor=k=>evs.find(e=>e.ch===k&&diffDays(e.date)>=(k==='anime'?0:0));
+  const slot=(b,s)=>b?`<div class="slot"><b>${b}</b>${s?`<span>${s}</span>`:''}</div>`:'<span class="faint small">—</span>';
+  const last=(arr,f)=>arr.filter(f).sort((x,y)=>String(y._d).localeCompare(String(x._d)))[0];
+  const todayGame=S.sports.games.find(g=>diffDays(g.date)===0);
+  const lastFinal=S.sports.games.filter(g=>g.status==='final').sort((x,y)=>y.date.localeCompare(x.date))[0];
+  const settled=S.betting.bets.filter(b=>b.result!=='open').sort((x,y)=>y.date.localeCompare(x.date))[0];
+  const heard=S.hiphop.releases.filter(r=>r.status==='heard').sort((x,y)=>String(y.date).localeCompare(String(x.date)))[0];
+  const queued=S.hiphop.releases.filter(r=>r.status==='queued'&&(!r.date||diffDays(r.date)<=0))[0];
+  const latestAlb=S.kpop.groups.flatMap(g=>(g.albums||[]).map(x=>({...x,g:g.name}))).sort((x,y)=>String(y.date).localeCompare(String(x.date)))[0];
+  const lastWatched=S.movies.items.filter(m=>m.status==='watched').sort((x,y)=>String(y.watched||'').localeCompare(String(x.watched||'')))[0];
+  const lastAnime=S.anime.items.filter(x=>x.status==='completed').sort((x,y)=>String(y.finished||'').localeCompare(String(x.finished||'')))[0];
+  const lastGame=S.games.items.filter(x=>x.status==='done').sort((x,y)=>String(y.finished||'').localeCompare(String(x.finished||'')))[0];
+  const backlogTop=S.games.items.find(x=>x.status==='backlog');
+  const nx=k=>{const e=nextFor(k);return e?slot(esc(e.title),`${rel(e.date)}${e.sub?' · '+esc(e.sub):''}`):''};
+  const rows=[
+    ['sports',todayGame?slot(`${esc(todayGame.away)} @ ${esc(todayGame.home)}`,`Tonight · ${fmtT(todayGame.date)}`):'',nx('sports'),lastFinal?slot(`${esc(lastFinal.away)} ${lastFinal.awayScore}, ${esc(lastFinal.home)} ${lastFinal.homeScore}`,`Final · ${fmtD(lastFinal.date)}`):''],
+    ['betting',open[0]?slot(`${open.length} open: ${esc(open[0].desc)}`,`${fmtOdds(open[0].odds)} · ${money(open[0].stake)}`):'',open[1]?slot(esc(open[1].desc),`${fmtOdds(open[1].odds)} · ${esc(open[1].book||'')}`):'',settled?slot(esc(settled.desc),`<span class="${profit(settled)>=0?'pos':'neg'}">${settled.result.toUpperCase()} ${money(profit(settled))}</span>`):''],
+    ['hiphop',queued?slot(`${esc(queued.artist)} — ${esc(queued.title)}`,'Queued to listen'):'',nx('hiphop'),heard?slot(`${esc(heard.artist)} — ${esc(heard.title)}`,heard.rating?`You rated it ${heard.rating}/10`:'Heard'):''],
+    ['kpop',latestAlb?slot(`${esc(latestAlb.g)} — ${esc(latestAlb.title)}`,`Latest release · ${fmtDY(latestAlb.date)}`):'',nx('kpop'),''],
+    ['movies',wl[0]?slot(esc(wl[0].title),'Top of your watchlist'):'',nx('movies'),lastWatched?slot(esc(lastWatched.title),lastWatched.rating?`You gave it ${lastWatched.rating}/10`:'Watched'):''],
+    ['anime',a?slot(esc(a.title),`Ep ${a.watched}/${a.episodes||'?'}`):'',nx('anime'),lastAnime?slot(esc(lastAnime.title),lastAnime.rating?`Finished · ${lastAnime.rating}/10`:'Finished'):''],
+    ['games',gp?slot(esc(gp.title),`${gp.hours||0}h · ${gp.completion||0}%`):'',nx('games')||(backlogTop?slot(esc(backlogTop.title),'Next in backlog'):''),lastGame?slot(esc(lastGame.title),`${lastGame.hours||0}h · ${lastGame.rating?lastGame.rating+'/10':'Done'}`):'']];
+  rows[3][3]=(()=>{const al=S.kpop.groups.flatMap(g=>(g.albums||[]).map(x=>({...x,g:g.name}))).filter(x=>x.rank).sort((x,y)=>x.rank-y.rank)[0];return al?slot(`${esc(al.g)} — ${esc(al.title)}`,'Your #1 ranked album'):''})();
+  const tn=UI.tonight;
+  const greet=now.getHours()<12?'Good morning':now.getHours()<18?'Good afternoon':'Good evening';
+  return `${exampleBanner()}
+  ${head('',greet,`${now.toLocaleDateString(undefined,{weekday:'long',month:'long',day:'numeric'})}. Here’s what’s on across your seven channels.`)}
+  <div class="tiles">${tiles.join('')}</div>
+  <div class="tonight"><div><h2>What should I do tonight?</h2><p>Pulls one pick from your watchlist, backlog, queued albums or current anime.</p></div>
+    <button class="btn" data-act="tonight">${tn?'Pick again':'Pick for me'}</button>
+    ${tn?`<div class="pick">${cover(tn.title,tn.sub,tn.ch==='hiphop'||tn.ch==='kpop'?'sq':'')}<div style="min-width:0"><div class="small" style="opacity:.7;text-transform:uppercase;letter-spacing:.1em;font-weight:700">${esc(chOf(tn.ch).name)}</div><div style="font-weight:700;font-size:18px">${esc(tn.title)}</div><div class="small" style="opacity:.75">${esc(tn.why)}</div></div></div>`:''}
+  </div>
+  <section class="sec"><h2>Channel guide</h2>
+    <div class="guide"><table><thead><tr><th>Channel</th><th>On now</th><th>Up next</th><th>In the books</th></tr></thead><tbody>
+    ${rows.map(([k,a1,b1,c1])=>`<tr style="--c:${cvar(k)}"><th><a href="#${k}">${chno(k)}${esc(chOf(k).name)}</a></th><td class="now">${a1||'<span class="faint small">—</span>'}</td><td>${b1||'<span class="faint small">—</span>'}</td><td>${c1||'<span class="faint small">—</span>'}</td></tr>`).join('')}
+    </tbody></table></div></section>`;
+}
+function pickTonight(){
+  const pool=[];
+  S.movies.items.filter(m=>m.status==='watchlist'&&(!m.release||diffDays(m.release)<=0)).forEach(m=>pool.push({ch:'movies',title:m.title,sub:m.year,why:`From your watchlist${m.runtime?` · ${m.runtime} min`:''}`}));
+  S.anime.items.filter(a=>a.status==='watching'||a.status==='plan').forEach(a=>{const left=(a.episodes||0)-(a.watched||0);pool.push({ch:'anime',title:a.title,sub:`Ep ${a.watched+1}`,why:a.status==='plan'?'Start something new':`Pick up at episode ${a.watched+1}${left>0?` · ${left} left`:''}`})});
+  S.games.items.filter(g=>g.status==='playing'||g.status==='backlog').forEach(g=>pool.push({ch:'games',title:g.title,sub:g.platform,why:g.status==='playing'?`Keep going — ${g.completion||0}% done`:'Pulled from your backlog'}));
+  S.hiphop.releases.filter(r=>r.status==='queued'&&(!r.date||diffDays(r.date)<=0)).forEach(r=>pool.push({ch:'hiphop',title:r.title,sub:r.artist,why:`${r.type} by ${r.artist}, queued to listen`}));
+  if(!pool.length){toast('Add something to a watchlist or backlog first');return}
+  let p;do{p=pool[Math.floor(Math.random()*pool.length)]}while(pool.length>1&&UI.tonight&&p.title===UI.tonight.title);
+  UI.tonight=p;render();
+}
+
+/* ---------- CALENDAR ---------- */
+function vCalendar(){
+  const c=UI.cal,f=c.filters;
+  const filt=evs=>evs.filter(e=>f.has(e.ch));
+  const evChip=e=>`<div class="ev" style="--c:${cvar(e.ch)}" title="${esc(e.title)}">${esc(e.title)}</div>`;
+  let body='';
+  const cur=c.cursor;
+  if(c.mode==='month'){
+    const first=new Date(cur.getFullYear(),cur.getMonth(),1);const start=addDays(first,-first.getDay());const end=addDays(start,41);
+    const evs=filt(allEvents(start,end));const by={};evs.forEach(e=>(by[e.date]=by[e.date]||[]).push(e));
+    let cells=DAYS.map(d=>`<div class="dow">${d}</div>`).join('');
+    for(let i=0;i<42;i++){const d=addDays(start,i),k=iso(d),es=by[k]||[];
+      cells+=`<button class="day ${d.getMonth()!==cur.getMonth()?'out':''} ${k===iso(today())?'today':''} ${k===c.sel?'sel':''}" data-act="calSel" data-d="${k}" aria-label="${d.toDateString()}, ${es.length} events"><span class="dn">${d.getDate()}</span>${es.slice(0,3).map(evChip).join('')}${es.length>3?`<span class="more">+${es.length-3} more</span>`:''}<span class="dots">${es.slice(0,5).map(e=>`<i style="--c:${cvar(e.ch)}"></i>`).join('')}</span></button>`}
+    const selEv=by[c.sel]||filt(allEvents(parseD(c.sel),parseD(c.sel)));
+    body=`<div class="cal">${cells}</div><section class="sec"><h2>${fmtDY(c.sel)} · ${rel(c.sel)}</h2>${agendaList(selEv,true)}</section>`;
+  }else if(c.mode==='week'){
+    const start=addDays(cur,-cur.getDay());const evs=filt(allEvents(start,addDays(start,6)));
+    body=`<div class="week">${[0,1,2,3,4,5,6].map(i=>{const d=addDays(start,i),k=iso(d);const es=evs.filter(e=>e.date===k);
+      return `<div class="wcol ${k===iso(today())?'today':''}"><h3>${DAYS[i]} <span class="faint num">${d.getMonth()+1}/${d.getDate()}</span></h3>${es.map(e=>`<div class="ev" style="--c:${cvar(e.ch)};white-space:normal">${esc(e.title)}${e.time?`<div class="faint">${fmtT(e.time)}</div>`:''}</div>`).join('')||'<span class="faint small">Nothing</span>'}</div>`}).join('')}</div>`;
+  }else{
+    const evs=filt(allEvents(today(),addDays(today(),60)));
+    const by={};evs.forEach(e=>(by[e.date]=by[e.date]||[]).push(e));
+    body=Object.keys(by).length?`<div class="panel agenda">${Object.keys(by).map(k=>`<div class="ad">${parseD(k).toLocaleDateString(undefined,{weekday:'short',month:'short',day:'numeric'})} <span class="cd">${rel(k)}</span></div>${agendaList(by[k],false)}`).join('')}</div>`:'<div class="empty">Nothing in the next 60 days for these channels.</div>';
+  }
+  const label=c.mode==='month'?cur.toLocaleDateString(undefined,{month:'long',year:'numeric'}):c.mode==='week'?`Week of ${fmtD(iso(addDays(cur,-cur.getDay())))}`:'Next 60 days';
+  return `${head('','Release Calendar','Games, comebacks, album drops, premieres, new episodes, birthdays and your own events in one place.',`<button class="btn pri" data-act="addEvent">Add event</button>`)}
+  <div class="phead" style="align-items:center">
+    <div class="acts">${['month','week','agenda'].map(m=>`<button class="chip" aria-pressed="${c.mode===m}" data-act="calMode" data-m="${m}">${m[0].toUpperCase()+m.slice(1)}</button>`).join('')}</div>
+    <div class="acts" style="align-items:center">${c.mode!=='agenda'?`<button class="btn sm" data-act="calNav" data-n="-1" aria-label="Previous">‹</button><b style="min-width:150px;text-align:center">${label}</b><button class="btn sm" data-act="calNav" data-n="1" aria-label="Next">›</button><button class="btn sm ghost" data-act="calToday">Today</button>`:`<b>${label}</b>`}</div>
+  </div>
+  <div class="chips">${CH.map(ch=>`<button class="chip" style="--c:${cvar(ch.key)}" aria-pressed="${f.has(ch.key)}" data-act="calFilter" data-k="${ch.key}"><span class="dot"></span>${ch.name}</button>`).join('')}</div>
+  ${body}`;
+}
+function agendaList(es,showDate){
+  if(!es.length)return '<div class="empty">Nothing on this day.</div>';
+  return `<div class="panel list">${es.map(e=>`<div class="li" style="--c:${cvar(e.ch)}">${chno(e.ch)}<div class="main"><b>${esc(e.title)}</b><span>${esc(e.sub||'')}${e.time?' · '+fmtT(e.time):''}${showDate?'':''}</span></div><div class="end"><span class="cd">${rel(e.date)}</span><a class="btn sm ghost" href="${gcal(e)}" target="_blank" rel="noopener" title="Add to Google Calendar">+ Google Cal</a>${e.custom?`<button class="btn sm ghost" data-act="delEvent" data-id="${e.custom}" aria-label="Delete event">✕</button>`:''}</div></div>`).join('')}</div>`;
+}
+
+/* ---------- SPORTS ---------- */
+function vSports(){
+  const L=UI.league;const inL=x=>L==='All'||x.league===L;
+  const games=S.sports.games.filter(inL);
+  const up=games.filter(g=>g.status!=='final').sort((a,b)=>a.date.localeCompare(b.date));
+  const fin=games.filter(g=>g.status==='final').sort((a,b)=>b.date.localeCompare(a.date));
+  const rec=t=>{let w=0,l=0,d=0;S.sports.games.filter(g=>g.status==='final'&&(g.home===t.name||g.away===t.name)).forEach(g=>{const me=g.home===t.name?g.homeScore:g.awayScore,op=g.home===t.name?g.awayScore:g.homeScore;if(me>op)w++;else if(me<op)l++;else d++});return {w,l,d}};
+  const gameRow=g=>{const mine=isFollowedTeam(g);const f=g.status==='final';const hw=f&&g.homeScore>g.awayScore,aw=f&&g.awayScore>g.homeScore;
+    return `<div class="li"><span class="tag c" style="--c:${cvar('sports')}">${esc(g.league)}</span><div class="main"><b><span style="${aw?'':'font-weight:500'}">${esc(g.away)}${f?` <span class="num">${g.awayScore}</span>`:''}</span> @ <span style="${hw?'':'font-weight:500'}">${esc(g.home)}${f?` <span class="num">${g.homeScore}</span>`:''}</span></b><span>${f?'Final · ':''}${parseD(g.date).toLocaleDateString(undefined,{weekday:'short',month:'short',day:'numeric'})}${f?'':' · '+fmtT(g.date)}${mine?' · ★ your team':''}</span></div><div class="end"><a class="btn sm ghost" href="https://www.youtube.com/results?search_query=${encodeURIComponent(g.away+' vs '+g.home+' highlights')}" target="_blank" rel="noopener">Highlights</a><button class="btn sm" data-act="edit" data-type="game" data-id="${g.id}">${f?'Edit':'Score'}</button></div></div>`};
+  return `${head('sports','Sports','Follow teams across leagues, log scores, and keep your records in one place.',`<button class="btn" data-act="add" data-type="team">Follow team</button><button class="btn pri" data-act="add" data-type="game">Add game</button>`)}
+  <div class="chips">${['All',...LEAGUES].map(l=>`<button class="chip" aria-pressed="${UI.league===l}" data-act="league" data-l="${l}">${l}</button>`).join('')}</div>
+  <section class="sec"><h2>Your teams</h2>${S.sports.teams.filter(inL).length?`<div class="tiles">${S.sports.teams.filter(inL).map(t=>{const r=rec(t);const nx=S.sports.games.filter(g=>g.status!=='final'&&(g.home===t.name||g.away===t.name)).sort((a,b)=>a.date.localeCompare(b.date))[0];
+    return `<div class="tile" style="--c:${cvar('sports')}"><div class="k">${esc(t.league)}</div><div class="v">${esc(t.name)}</div><div class="s"><span class="num">${r.w}–${r.l}${r.d?'–'+r.d:''}</span> in logged games</div><div class="s">${nx?`Next: ${nx.home===t.name?'vs '+esc(nx.away):'@ '+esc(nx.home)}, ${rel(nx.date)}`:'No upcoming game logged'}</div><div class="row"><a class="btn sm ghost" href="https://www.espn.com/${ESPN[t.league]||''}/scoreboard" target="_blank" rel="noopener">ESPN scoreboard</a><button class="btn sm ghost" data-act="edit" data-type="team" data-id="${t.id}">Edit</button></div></div>`}).join('')}</div>`:'<div class="empty">Follow a team to see its record and next game here.</div>'}</section>
+  <div class="grid2"><section class="sec"><h2>Upcoming</h2>${up.length?`<div class="panel list">${up.map(gameRow).join('')}</div>`:'<div class="empty">No upcoming games logged.</div>'}</section>
+  <section class="sec"><h2>Results</h2>${fin.length?`<div class="panel list">${fin.map(gameRow).join('')}</div>`:'<div class="empty">Final scores show up here.</div>'}</section></div>
+  <p class="small faint">Live scores and box scores need a data feed this page can’t reach, so games are logged by you. ESPN links open the live scoreboard for each league.</p>`;
+}
+
+/* ---------- BETTING ---------- */
+function vBetting(){
+  const B=S.betting.bets;const unit=S.betting.unit||25;
+  const per=UI.betPeriod;const cut={'7':7,'30':30,'90':90}[per];
+  const inP=b=>!cut||diffDays(b.date)>=-cut;
+  const settled=B.filter(b=>b.result!=='open'&&inP(b)).sort((a,b)=>a.date.localeCompare(b.date));
+  const net=settled.reduce((s,b)=>s+profit(b),0),staked=settled.reduce((s,b)=>s+Number(b.stake||0),0);
+  const wins=settled.filter(b=>b.result==='win').length,losses=settled.filter(b=>b.result==='loss').length;
+  const open=B.filter(b=>b.result==='open');
+  // cumulative chart
+  let cum=0;const pts=settled.map(b=>({d:b.date,v:(cum+=profit(b))}));
+  const chart=lineChart(pts,'betting');
+  // by sport
+  const by={};settled.forEach(b=>{by[b.sport]=by[b.sport]||{n:0,w:0,p:0,s:0};const o=by[b.sport];o.n++;o.s+=Number(b.stake);o.p+=profit(b);if(b.result==='win')o.w++});
+  const sportRows=Object.entries(by).sort((a,b)=>b[1].p-a[1].p);
+  const maxAbs=Math.max(1,...sportRows.map(([,o])=>Math.abs(o.p)));
+  // periods
+  const periods=[['Last 7 days',7],['Last 30 days',30],['Last 90 days',90],['All time',null]].map(([l,n])=>{const s=B.filter(b=>b.result!=='open'&&(!n||diffDays(b.date)>=-n));const p=s.reduce((a,b)=>a+profit(b),0),st=s.reduce((a,b)=>a+Number(b.stake),0),w=s.filter(b=>b.result==='win').length,l2=s.filter(b=>b.result==='loss').length;return {l,n:s.length,p,roi:st?p/st*100:0,wr:w+l2?w/(w+l2)*100:0}});
+  // odds comparison
+  const oc=UI.odds.filter(o=>o.odds!==''&&!isNaN(o.odds));const best=oc.length?oc.reduce((a,b)=>Number(b.odds)>Number(a.odds)?b:a):null;
+  const all=[...B].sort((a,b)=>b.date.localeCompare(a.date));
+  return `${head('betting','Betting','Profit graphs, performance by sport and period, line movement and odds shopping.',`<label class="small muted" for="unit">Unit $</label><input id="unit" class="btn sm" style="width:70px" type="number" min="1" value="${unit}" data-chg="unit"><button class="btn pri" data-act="add" data-type="bet">Log bet</button>`)}
+  <div class="chips">${[['7','7 days'],['30','30 days'],['90','90 days'],['all','All time']].map(([k,l])=>`<button class="chip" aria-pressed="${per===k}" data-act="betPeriod" data-p="${k}">${l}</button>`).join('')}</div>
+  <div class="stats">
+    <div class="stat"><div class="k">Net profit</div><div class="v ${net>=0?'pos':'neg'}">${money(net)}</div></div>
+    <div class="stat"><div class="k">Units</div><div class="v ${net>=0?'pos':'neg'}">${sgn(net/unit)}</div></div>
+    <div class="stat"><div class="k">Win rate</div><div class="v">${wins+losses?(wins/(wins+losses)*100).toFixed(1):'0.0'}%</div></div>
+    <div class="stat"><div class="k">ROI</div><div class="v ${net>=0?'pos':'neg'}">${staked?sgn(net/staked*100):'0.0'}%</div></div>
+    <div class="stat"><div class="k">Record</div><div class="v">${wins}–${losses}</div></div>
+    <div class="stat"><div class="k">Open</div><div class="v">${open.length}</div></div>
+  </div>
+  <section class="sec"><h2>Cumulative profit</h2><div class="panel pad chart">${chart}</div></section>
+  <div class="grid2">
+    <section class="sec"><h2>By sport</h2><div class="panel pad" style="display:flex;flex-direction:column;gap:10px">${sportRows.length?sportRows.map(([s,o])=>`<div style="display:grid;grid-template-columns:70px minmax(0,1fr) 90px;gap:10px;align-items:center"><b class="small">${esc(s)}</b><div style="display:flex;height:16px;background:var(--surface-2);border-radius:4px;overflow:hidden"><div style="width:50%;display:flex;justify-content:flex-end">${o.p<0?`<i style="width:${Math.abs(o.p)/maxAbs*100}%;background:var(--bad)"></i>`:''}</div><div style="width:50%;border-left:1px solid var(--ink-3)">${o.p>0?`<i style="display:block;height:100%;width:${o.p/maxAbs*100}%;background:var(--good)"></i>`:''}</div></div><span class="num small ${o.p>=0?'pos':'neg'}" style="text-align:right">${money(o.p)}</span><span></span><span class="faint small">${o.n} bets · ${o.w}/${o.n} won · ROI ${sgn(o.p/o.s*100)}%</span></div>`).join(''):'<div class="empty">No settled bets in this period.</div>'}</div></section>
+    <section class="sec"><h2>By period</h2><div class="tw"><table class="t"><thead><tr><th>Period</th><th class="r">Bets</th><th class="r">Win %</th><th class="r">Profit</th><th class="r">ROI</th></tr></thead><tbody>${periods.map(p=>`<tr><td>${p.l}</td><td class="r num">${p.n}</td><td class="r num">${p.wr.toFixed(1)}</td><td class="r num ${p.p>=0?'pos':'neg'}">${money(p.p)}</td><td class="r num ${p.roi>=0?'pos':'neg'}">${sgn(p.roi)}%</td></tr>`).join('')}</tbody></table></div></section>
+  </div>
+  <section class="sec"><h2>Odds shopping <span class="faint" style="text-transform:none;letter-spacing:0;font-weight:500">enter each book’s line to find the best price</span></h2>
+    <div class="panel pad" style="display:flex;flex-direction:column;gap:10px">
+      ${UI.odds.map((o,i)=>`<div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap"><input id="ob${i}" class="btn sm" style="flex:1;min-width:120px;font-weight:500" value="${esc(o.book)}" data-chg="oddsBook" data-i="${i}" aria-label="Sportsbook"><input id="oo${i}" class="btn sm num" style="width:90px;font-weight:500" type="number" value="${esc(o.odds)}" data-chg="oddsVal" data-i="${i}" aria-label="American odds"><span class="num small" style="width:140px">${o.odds!==''&&!isNaN(o.odds)?`${(implied(Number(o.odds))*100).toFixed(1)}% · $100 wins ${money(Number(o.odds)>0?Number(o.odds):10000/Math.abs(o.odds))}`:''}</span>${best&&best===o?'<span class="tag c" style="--c:var(--good)">Best price</span>':''}<button class="btn sm ghost" data-act="oddsDel" data-i="${i}" aria-label="Remove">✕</button></div>`).join('')}
+      <div><button class="btn sm" data-act="oddsAdd">Add book</button></div>
+    </div></section>
+  <section class="sec"><h2>All bets</h2><div class="tw"><table class="t"><thead><tr><th>Date</th><th>Pick</th><th>Sport</th><th class="r">Odds</th><th class="r">Stake</th><th>Result</th><th class="r">P/L</th><th>Line</th><th></th></tr></thead><tbody>
+  ${all.map(b=>{const p=profit(b);const L=b.lines||[];const exp=UI.betOpen===b.id;
+    const clv=L.length?implied(Number(L[L.length-1].odds))-implied(Number(b.odds)):null;
+    return `<tr><td class="num small">${fmtD(b.date)}</td><td><b style="font-weight:600">${esc(b.desc)}</b><div class="faint small">${esc(b.book||'')}</div></td><td>${esc(b.sport)}</td><td class="r num">${fmtOdds(b.odds)}</td><td class="r num">${money(Number(b.stake))}</td>
+    <td>${b.result==='open'?`<div class="acts"><button class="btn sm" data-act="settle" data-id="${b.id}" data-r="win">Won</button><button class="btn sm" data-act="settle" data-id="${b.id}" data-r="loss">Lost</button><button class="btn sm ghost" data-act="settle" data-id="${b.id}" data-r="push">Push</button></div>`:`<span class="tag c" style="--c:${b.result==='win'?'var(--good)':b.result==='loss'?'var(--bad)':'var(--ink-3)'}">${b.result}</span>`}</td>
+    <td class="r num ${p>0?'pos':p<0?'neg':''}">${b.result==='open'?'—':money(p)}</td>
+    <td>${L.length>1?spark(L.map(x=>Number(x.odds))):''}${clv!=null?`<div class="small num ${clv>0?'pos':clv<0?'neg':''}" title="Closing line value">CLV ${sgn(clv*100)}%</div>`:''}<button class="btn sm ghost" data-act="betExpand" data-id="${b.id}">${exp?'Hide':'Track line'}</button></td>
+    <td><button class="btn sm ghost" data-act="edit" data-type="bet" data-id="${b.id}">Edit</button></td></tr>
+    ${exp?`<tr class="sub"><td colspan="9"><div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center"><span class="small muted">Line history:</span>${L.map((x,i)=>`<span class="tag">${fmtD(x.t)} ${fmtOdds(x.odds)} <button class="btn sm ghost" style="height:18px;padding:0 4px" data-act="lineDel" data-id="${b.id}" data-i="${i}" aria-label="Remove">✕</button></span>`).join('')||'<span class="faint small">No snapshots yet</span>'}<input id="ln-${b.id}" class="btn sm num" style="width:90px;font-weight:500" type="number" placeholder="−110" aria-label="Current odds"><button class="btn sm" data-act="lineAdd" data-id="${b.id}">Log current line</button></div><div class="small faint" style="margin-top:6px">Positive CLV means the line moved toward your pick after you bet — a sign you beat the market.</div></td></tr>`:''}`}).join('')||'<tr><td colspan="9" class="faint">No bets logged.</td></tr>'}
+  </tbody></table></div></section>
+  <p class="small faint">Live odds from The Odds API need a server key, so prices here are typed in. Nothing on this page holds an API key.</p>`;
+}
+function lineChart(pts,k){
+  if(pts.length<2)return '<div class="empty">Settle at least two bets to draw the curve.</div>';
+  const W=760,H=240,pl=56,pr=12,pt=12,pb=28;
+  const vs=pts.map(p=>p.v);let lo=Math.min(0,...vs),hi=Math.max(0,...vs);
+  const step=nice((hi-lo)/4);lo=Math.floor(lo/step)*step;hi=Math.ceil(hi/step)*step;if(hi===lo)hi=lo+step;
+  const x=i=>pl+i*(W-pl-pr)/(pts.length-1),y=v=>pt+(hi-v)*(H-pt-pb)/(hi-lo);
+  let g='';for(let v=lo;v<=hi+1e-9;v+=step)g+=`<line class="gl" x1="${pl}" x2="${W-pr}" y1="${y(v)}" y2="${y(v)}"/><text class="ax" x="${pl-8}" y="${y(v)+4}" text-anchor="end">${v<0?'−':''}$${Math.abs(v)}</text>`;
+  const ticks=[0,Math.floor((pts.length-1)/2),pts.length-1].map(i=>`<text class="ax" x="${x(i)}" y="${H-8}" text-anchor="${i===0?'start':i===pts.length-1?'end':'middle'}">${fmtD(pts[i].d)}</text>`).join('');
+  const line=pts.map((p,i)=>`${i?'L':'M'}${x(i).toFixed(1)},${y(p.v).toFixed(1)}`).join('');
+  const area=`${line}L${x(pts.length-1)},${y(0)}L${x(0)},${y(0)}Z`;
+  const last=pts[pts.length-1];
+  return `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Cumulative profit ${money(last.v)}">${g}<line class="zero" x1="${pl}" x2="${W-pr}" y1="${y(0)}" y2="${y(0)}"/>
+  <path d="${area}" fill="${cvar(k)}" fill-opacity=".12"/><path d="${line}" fill="none" stroke="${cvar(k)}" stroke-width="2.5" stroke-linejoin="round"/>
+  <circle cx="${x(pts.length-1)}" cy="${y(last.v)}" r="5" fill="${cvar(k)}" stroke="var(--surface)" stroke-width="2"/>${ticks}</svg>`;
+}
+function nice(r){if(r<=0)return 10;const p=Math.pow(10,Math.floor(Math.log10(r)));const f=r/p;return (f<=1?1:f<=2?2:f<=2.5?2.5:f<=5?5:10)*p}
+function spark(vals){const W=70,H=20,lo=Math.min(...vals),hi=Math.max(...vals),r=hi-lo||1;return `<svg width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" aria-label="Line movement ${vals.map(fmtOdds).join(' to ')}" style="display:block"><path d="${vals.map((v,i)=>`${i?'L':'M'}${(i*(W-4)/(vals.length-1)+2).toFixed(1)},${(H-2-(v-lo)/r*(H-4)).toFixed(1)}`).join('')}" fill="none" stroke="${cvar('betting')}" stroke-width="1.6"/></svg>`}
+
+/* ---------- HIP-HOP ---------- */
+function vHiphop(){
+  const R=S.hiphop.releases;const A=S.hiphop.artists;
+  const upcoming=R.filter(r=>r.date&&diffDays(r.date)>0).sort((a,b)=>a.date.localeCompare(b.date));
+  const recent=R.filter(r=>r.date&&diffDays(r.date)<=0&&diffDays(r.date)>=-30).sort((a,b)=>b.date.localeCompare(a.date));
+  const under=A.filter(a=>a.underground).map(a=>a.name);
+  const ugRel=R.filter(r=>under.includes(r.artist)).sort((a,b)=>String(b.date).localeCompare(String(a.date)));
+  const lib=[...R].sort((a,b)=>(b.rating||0)-(a.rating||0)||String(b.date).localeCompare(String(a.date)));
+  const relCard=r=>`<button class="card" data-act="edit" data-type="release" data-id="${r.id}">${cover(r.title,r.artist,'sq',r.rating?r.rating+'/10':'')}<b>${esc(r.title)}</b><span class="meta">${esc(r.artist)} · ${esc(r.type||'')} · ${r.date?(diffDays(r.date)>0?rel(r.date):fmtDY(r.date)):'TBA'}${r.status==='queued'?' · queued':''}</span></button>`;
+  return `${head('hiphop','Hip-Hop','A release radar for the artists you follow, plus ratings for everything you’ve heard.',`<button class="btn" data-act="add" data-type="artist">Follow artist</button><button class="btn pri" data-act="add" data-type="release">Add release</button>`)}
+  <section class="sec"><h2>Release radar</h2><div class="grid2"><div><div class="sh" style="margin-bottom:8px">Coming up</div>${upcoming.length?`<div class="panel list">${upcoming.map(r=>`<div class="li"><div class="main"><b>${esc(r.artist)} — ${esc(r.title)}</b><span>${esc(r.type)} · ${fmtDY(r.date)}</span></div><div class="end"><span class="cd">${rel(r.date)}</span><a class="btn sm ghost" href="${gcal({date:r.date,title:r.artist+' — '+r.title,sub:r.type})}" target="_blank" rel="noopener">+ Cal</a></div></div>`).join('')}</div>`:'<div class="empty">No upcoming drops logged.</div>'}</div>
+  <div><div class="sh" style="margin-bottom:8px">Out in the last 30 days</div>${recent.length?`<div class="panel list">${recent.map(r=>`<div class="li"><div class="main"><b>${esc(r.artist)} — ${esc(r.title)}</b><span>${rel(r.date)}</span></div><div class="end"><a class="btn sm ghost" href="https://open.spotify.com/search/${encodeURIComponent(r.artist+' '+r.title)}" target="_blank" rel="noopener">Preview</a></div></div>`).join('')}</div>`:'<div class="empty">Nothing new in the last month.</div>'}</div></div></section>
+  <section class="sec"><h2>Underground radar</h2><div class="panel pad" style="display:flex;flex-direction:column;gap:10px"><div class="chips">${A.filter(a=>a.underground).map(a=>`<button class="chip" data-act="edit" data-type="artist" data-id="${a.id}">${esc(a.name)}</button>`).join('')||'<span class="faint small">Mark an artist as underground to track them here.</span>'}</div>${ugRel.length?`<div class="cards">${ugRel.slice(0,6).map(relCard).join('')}</div>`:''}</div></section>
+  <section class="sec"><h2>Following</h2><div class="chips">${A.map(a=>`<button class="chip" data-act="edit" data-type="artist" data-id="${a.id}">${esc(a.name)}${a.underground?' · UG':''}</button>`).join('')||'<span class="faint small">No artists yet.</span>'}</div></section>
+  <section class="sec"><h2>Your library <span class="faint" style="text-transform:none;letter-spacing:0;font-weight:500">sorted by your rating</span></h2>${lib.length?`<div class="cards">${lib.map(relCard).join('')}</div>`:'<div class="empty">Add a release to start your library.</div>'}</section>`;
+}
+
+/* ---------- K-POP ---------- */
+function vKpop(){
+  const G=S.kpop.groups;const sel=G.find(g=>g.id===UI.kpopSel);
+  if(sel)return kpopProfile(sel);
+  return `${head('kpop','K-Pop','Artist profiles with members, discographies, comebacks and your own album rankings.',`<button class="btn pri" data-act="add" data-type="group">Add group</button>`)}
+  ${G.length?`<div class="cards">${G.map(g=>{const nx=(g.comebacks||[]).filter(c=>diffDays(c.date)>=0).sort((a,b)=>a.date.localeCompare(b.date))[0];return `<button class="card" data-act="kpopOpen" data-id="${g.id}">${cover(g.name,g.agency,'sq',g.followed?'★':'')}<b>${esc(g.name)}</b><span class="meta">${(g.members||[]).length} members${nx?` · ${esc(nx.kind)} ${rel(nx.date)}`:''}</span></button>`}).join('')}</div>`:'<div class="empty">Add a group — Claude can fill in members and discography for you.</div>'}`;
+}
+function kpopProfile(g){
+  const nx=(g.comebacks||[]).filter(c=>diffDays(c.date)>=-1).sort((a,b)=>a.date.localeCompare(b.date));
+  const albums=[...(g.albums||[])].sort((a,b)=>String(b.date).localeCompare(String(a.date)));
+  const ranked=[...(g.albums||[])].map((a,i)=>({a,i})).sort((x,y)=>(x.a.rank||99)-(y.a.rank||99));
+  const host=u=>{try{return new URL(u).hostname.replace('www.','')}catch(e){return u}};
+  return `<div><button class="btn sm ghost" data-act="kpopOpen" data-id="">‹ All groups</button></div>
+  <div class="prof" style="--c:${cvar('kpop')}">${cover(g.name,g.fandom?'Fandom: '+g.fandom:'','sq')}
+    <div><div class="phead"><div><div class="t">${chno('kpop')}<h1>${esc(g.name)}</h1></div></div><div class="acts"><button class="btn ${g.followed?'ch':''}" style="--c:${cvar('kpop')}" data-act="follow" data-id="${g.id}">${g.followed?'★ Following':'☆ Follow'}</button><button class="btn" data-act="edit" data-type="group" data-id="${g.id}">Edit profile</button></div></div>
+    <div class="facts"><div><span>Agency</span><b>${esc(g.agency||'—')}</b></div><div><span>Debut</span><b>${g.debut?fmtDY(g.debut):'—'}</b></div><div><span>Fandom</span><b>${esc(g.fandom||'—')}</b></div><div><span>Years active</span><b class="num">${g.debut?age(g.debut):'—'}</b></div></div>
+    ${(g.socials||[]).length?`<div class="chips" style="margin-top:12px">${g.socials.map(u=>`<a class="chip" href="${esc(u)}" target="_blank" rel="noopener">${esc(host(u))}</a>`).join('')}</div>`:''}</div></div>
+  <section class="sec"><h2>Members</h2>${(g.members||[]).length?`<div class="tw"><table class="t"><thead><tr><th>Stage name</th><th>Real name</th><th>Birthday</th><th class="r">Age</th><th>Nationality</th><th>Position</th></tr></thead><tbody>${g.members.map(m=>`<tr><td><b>${esc(m.stage)}</b></td><td>${esc(m.real||'—')}</td><td class="num">${m.birthday?fmtDY(m.birthday):'—'}</td><td class="r num">${m.birthday?age(m.birthday):'—'}</td><td>${esc(m.nationality||'—')}</td><td class="small">${esc(m.position||'—')}</td></tr>`).join('')}</tbody></table></div>`:'<div class="empty">No members listed.</div>'}</section>
+  <div class="grid2">
+  <section class="sec"><h2>Upcoming activities</h2>${nx.length?`<div class="panel list">${nx.map(c=>`<div class="li"><span class="tag c" style="--c:${cvar('kpop')}">${esc(c.kind||'Event')}</span><div class="main"><b>${esc(c.title)}</b><span>${fmtDY(c.date)}</span></div><div class="end"><span class="cd">${rel(c.date)}</span><a class="btn sm ghost" href="${gcal({date:c.date,title:g.name+': '+c.title,sub:c.kind})}" target="_blank" rel="noopener">+ Cal</a></div></div>`).join('')}</div>`:'<div class="empty">Add comeback, concert or anniversary dates in Edit profile.</div>'}</section>
+  <section class="sec"><h2>Your album ranking</h2>${ranked.length?`<div class="panel list">${ranked.map(({a,i},n)=>`<div class="li"><span class="num" style="font-weight:600;width:22px">${n+1}</span><div class="main"><b>${esc(a.title)}</b><span>${esc(a.type||'')} · ${a.date?parseD(a.date).getFullYear():''}</span></div><div class="end"><button class="btn sm ghost" data-act="rank" data-id="${g.id}" data-i="${i}" data-d="-1" aria-label="Move up" ${n===0?'disabled':''}>▲</button><button class="btn sm ghost" data-act="rank" data-id="${g.id}" data-i="${i}" data-d="1" aria-label="Move down" ${n===ranked.length-1?'disabled':''}>▼</button></div></div>`).join('')}</div>`:'<div class="empty">No albums yet.</div>'}</section></div>
+  <section class="sec"><h2>Discography <span class="faint" style="text-transform:none;letter-spacing:0;font-weight:500">tap a track to mark it a favorite</span></h2>${albums.length?`<div class="grid3">${albums.map(a=>{const i=g.albums.indexOf(a);return `<div class="panel pad" style="display:flex;gap:12px;--c:${cvar('kpop')}"><div style="width:84px;flex:none">${cover(a.title,'','sq')}</div><div style="min-width:0;display:flex;flex-direction:column;gap:6px"><b>${esc(a.title)}</b><span class="small muted">${esc(a.type||'')} · ${fmtDY(a.date)}</span><div class="trk">${(a.tracks||[]).map(t=>`<button aria-pressed="${(a.favs||[]).includes(t)}" data-act="fav" data-id="${g.id}" data-i="${i}" data-t="${esc(t)}">${(a.favs||[]).includes(t)?'♥ ':''}${esc(t)}</button>`).join('')}</div><div class="acts"><a class="btn sm ghost" href="https://www.youtube.com/results?search_query=${encodeURIComponent(g.name+' '+((a.tracks||[])[0]||a.title)+' MV')}" target="_blank" rel="noopener">MV</a><a class="btn sm ghost" href="https://open.spotify.com/search/${encodeURIComponent(g.name+' '+a.title)}" target="_blank" rel="noopener">Spotify</a></div></div></div>`}).join('')}</div>`:'<div class="empty">No releases listed.</div>'}</section>`;
+}
+
+/* ---------- MOVIES ---------- */
+function vMovies(){
+  const M=S.movies.items;const tab=UI.movieTab;
+  let items=tab==='watchlist'?M.filter(m=>m.status==='watchlist'):tab==='watched'?M.filter(m=>m.status==='watched').sort((a,b)=>String(b.watched||'').localeCompare(String(a.watched||''))):M.filter(m=>m.status==='watched').sort((a,b)=>(a.rank||999)-(b.rank||999)||(b.rating||0)-(a.rating||0));
+  const watched=M.filter(m=>m.status==='watched'&&m.rating);
+  const avgMe=watched.length?watched.reduce((s,m)=>s+Number(m.rating),0)/watched.length:0;
+  const withAud=watched.filter(m=>m.audience);const diff=withAud.length?withAud.reduce((s,m)=>s+(m.rating-m.audience),0)/withAud.length:0;
+  const body=tab==='ranked'?(items.length?`<div class="panel list">${items.map((m,n)=>`<div class="li"><span class="num" style="font-weight:600;width:24px">${n+1}</span><div style="width:40px;flex:none">${cover(m.title,'')}</div><div class="main"><b>${esc(m.title)} <span class="faint">${m.year||''}</span></b><span>You ${m.rating??'—'}/10 · Audience ${m.audience??'—'}/10</span></div><div class="end"><button class="btn sm ghost" data-act="mrank" data-id="${m.id}" data-d="-1" ${n===0?'disabled':''} aria-label="Move up">▲</button><button class="btn sm ghost" data-act="mrank" data-id="${m.id}" data-d="1" ${n===items.length-1?'disabled':''} aria-label="Move down">▼</button></div></div>`).join('')}</div>`:'<div class="empty">Rate movies you’ve watched to rank them.</div>')
+   :(items.length?`<div class="cards">${items.map(m=>`<button class="card" data-act="edit" data-type="movie" data-id="${m.id}">${cover(m.title,m.year,'',m.rating?m.rating+'/10':m.release&&diffDays(m.release)>0?rel(m.release):'')}<b>${esc(m.title)}</b><span class="meta">${list(m.genres).join(', ')}${m.rewatches?` · rewatched ×${m.rewatches}`:''}</span>${m.status==='watched'&&m.rating&&m.audience?`<span class="meta">You <b class="num">${m.rating}</b> vs audience <b class="num">${m.audience}</b> <span class="${m.rating>=m.audience?'pos':'neg'}">(${sgn(m.rating-m.audience)})</span></span>`:''}</button>`).join('')}</div>`:`<div class="empty">${tab==='watchlist'?'Your watchlist is empty.':'Nothing watched yet.'}</div>`);
+  return `${head('movies','Movies','A personal Letterboxd — posters, ratings out of 10, reviews, rewatches and ranked lists.',`<button class="btn pri" data-act="add" data-type="movie">Add movie</button>`)}
+  <div class="stats"><div class="stat"><div class="k">Watched</div><div class="v">${M.filter(m=>m.status==='watched').length}</div></div><div class="stat"><div class="k">Watchlist</div><div class="v">${M.filter(m=>m.status==='watchlist').length}</div></div><div class="stat"><div class="k">Your average</div><div class="v">${avgMe.toFixed(1)}</div></div><div class="stat"><div class="k">You vs audience</div><div class="v ${diff>=0?'pos':'neg'}">${sgn(diff)}</div></div></div>
+  <div class="chips">${[['watchlist','Watchlist'],['watched','Watched'],['ranked','Ranked list']].map(([k,l])=>`<button class="chip" aria-pressed="${tab===k}" data-act="movieTab" data-t="${k}">${l}</button>`).join('')}</div>
+  ${body}`;
+}
+
+/* ---------- ANIME ---------- */
+function vAnime(){
+  const A=S.anime.items;const w=A.filter(a=>a.status==='watching');const td=new Date().getDay();
+  const airing=A.filter(a=>a.status==='watching'&&a.airDay!=null&&a.airDay!=='');
+  const hrsLeft=w.reduce((s,a)=>s+Math.max(0,(a.episodes||0)-(a.watched||0))*(a.epLength||24)/60,0);
+  return `${head('anime','Anime','Episode-by-episode progress, a weekly airing schedule, and hours left on everything you’re watching.',`<button class="btn pri" data-act="add" data-type="anime">Add anime</button>`)}
+  <div class="stats"><div class="stat"><div class="k">Watching</div><div class="v">${w.length}</div></div><div class="stat"><div class="k">Completed</div><div class="v">${A.filter(a=>a.status==='completed').length}</div></div><div class="stat"><div class="k">Hours left</div><div class="v">${Math.round(hrsLeft).toLocaleString()}</div></div><div class="stat"><div class="k">Airing today</div><div class="v">${airing.filter(a=>Number(a.airDay)===td).length}</div></div></div>
+  <section class="sec"><h2>Currently watching</h2>${w.length?`<div class="panel list" style="--c:${cvar('anime')}">${w.map(a=>{const pct=a.episodes?Math.min(100,a.watched/a.episodes*100):0;const left=Math.max(0,(a.episodes||0)-a.watched);return `<div class="li"><div style="width:44px;flex:none">${cover(a.title,'')}</div><div class="main"><b>${esc(a.title)}</b><span class="num">${a.watched}/${a.episodes||'?'} episodes · ${pct.toFixed(0)}% complete${a.episodes?` · ${(left*(a.epLength||24)/60).toFixed(1)}h left`:''}${a.airDay!=null&&a.airDay!==''?` · airs ${DAYS[a.airDay]}`:''}</span><div class="bar" style="margin-top:6px"><i style="width:${pct}%"></i></div></div><div class="end"><button class="btn sm ghost" data-act="epMinus" data-id="${a.id}" aria-label="Minus one episode">−</button><button class="btn sm ch" data-act="epPlus" data-id="${a.id}">+1 ep</button><button class="btn sm ghost" data-act="edit" data-type="anime" data-id="${a.id}">Edit</button></div></div>`}).join('')}</div>`:'<div class="empty">Nothing in progress.</div>'}</section>
+  <section class="sec"><h2>This week’s schedule</h2><div class="week">${[0,1,2,3,4,5,6].map(i=>{const d=(td+i)%7;const xs=airing.filter(a=>Number(a.airDay)===d);return `<div class="wcol ${i===0?'today':''}"><h3>${i===0?'Today':DAYS[d]}</h3>${xs.map(a=>`<div class="ev" style="--c:${cvar('anime')};white-space:normal">${esc(a.title)}<div class="faint">Ep ${a.watched+1}</div></div>`).join('')||'<span class="faint small">—</span>'}</div>`}).join('')}</div></section>
+  <section class="sec"><h2>Library</h2><div class="cards">${A.filter(a=>a.status!=='watching').map(a=>`<button class="card" data-act="edit" data-type="anime" data-id="${a.id}">${cover(a.title,a.season||'',  '',a.rating?a.rating+'/10':'')}<b>${esc(a.title)}</b><span class="meta">${({plan:'Plan to watch',completed:'Completed',dropped:'Dropped',watching:'Watching'})[a.status]} · ${a.episodes||'?'} eps</span></button>`).join('')||'<div class="empty">Completed and planned shows land here.</div>'}</div></section>`;
+}
+
+/* ---------- GAMES ---------- */
+function vGames(){
+  const G=S.games.items;
+  const col=(st,label)=>{const xs=G.filter(g=>g.status===st);return `<section class="sec"><h2>${label} <span class="faint">${xs.length}</span></h2>${xs.length?`<div class="panel list" style="--c:${cvar('games')}">${xs.map(g=>`<div class="li"><div style="width:44px;flex:none">${cover(g.title,'','sq')}</div><div class="main"><b>${esc(g.title)}</b><span>${esc(g.platform||'')}${g.critic?` · critics ${g.critic}`:''}${g.rating?` · you ${g.rating}/10`:''}${st==='wishlist'&&g.release?` · out ${rel(g.release)}`:''}</span>${st!=='wishlist'?`<div class="small muted num">${g.hours||0}h${g.achTotal?` · ${g.achGot||0}/${g.achTotal} achievements`:''}</div><div class="bar" style="margin-top:4px"><i style="width:${g.completion||0}%"></i></div>`:''}</div><div class="end">${st==='playing'?`<button class="btn sm" data-act="hrPlus" data-id="${g.id}">+1h</button>`:''}<button class="btn sm ghost" data-act="edit" data-type="game" data-id="${g.id}">Edit</button></div></div>`).join('')}</div>`:'<div class="empty">Empty.</div>'}</section>`};
+  const total=G.reduce((s,g)=>s+Number(g.hours||0),0);
+  const rp=UI.randomGame?G.find(g=>g.id===UI.randomGame):null;
+  return `${head('games','Video Games','A detailed backlog with hours, completion, achievements and a randomizer for indecisive nights.',`<button class="btn" data-act="randomGame">Backlog randomizer</button><button class="btn pri" data-act="add" data-type="game">Add game</button>`)}
+  ${rp?`<div class="tonight" style="background:${cvar('games')}"><div><h2>Play ${esc(rp.title)}</h2><p>${esc(rp.platform||'')} · ${rp.hours?rp.hours+'h in':'not started'}${rp.critic?' · critics '+rp.critic:''}</p></div><button class="btn" data-act="randomGame">Roll again</button></div>`:''}
+  <div class="stats"><div class="stat"><div class="k">Playing</div><div class="v">${G.filter(g=>g.status==='playing').length}</div></div><div class="stat"><div class="k">Backlog</div><div class="v">${G.filter(g=>g.status==='backlog').length}</div></div><div class="stat"><div class="k">Finished</div><div class="v">${G.filter(g=>g.status==='done').length}</div></div><div class="stat"><div class="k">Hours logged</div><div class="v">${total}</div></div></div>
+  <div class="grid2">${col('playing','Playing')}${col('backlog','Backlog')}${col('done','Finished')}${col('wishlist','Wishlist & upcoming')}</div>`;
+}
+
+/* ---------- FOR YOU ---------- */
+function vForYou(){
+  const liked=[],cand=[];
+  const add=(ch,arr,likedF,candF,titleF,genresF)=>arr.forEach(x=>{if(likedF(x))liked.push({ch,title:titleF(x),g:list(genresF(x))});if(candF(x))cand.push({ch,x,title:titleF(x),g:list(genresF(x))})});
+  add('movies',S.movies.items,m=>m.rating>=8,m=>m.status==='watchlist',m=>m.title,m=>m.genres);
+  add('anime',S.anime.items,a=>a.rating>=8,a=>a.status==='plan'||a.status==='watching',a=>a.title,a=>a.genres);
+  add('games',S.games.items,g=>g.rating>=8,g=>g.status==='backlog'||g.status==='wishlist',g=>g.title,g=>g.genres);
+  add('hiphop',S.hiphop.releases,r=>r.rating>=8,r=>r.status==='queued',r=>`${r.artist} — ${r.title}`,r=>r.genre);
+  const scored=cand.map(c=>{let best=null,sc=0;liked.forEach(l=>{const o=c.g.filter(g=>l.g.map(s=>s.toLowerCase()).includes(g.toLowerCase())).length;if(o>sc){sc=o;best=l}});return {...c,sc,because:best}}).filter(c=>c.sc>0).sort((a,b)=>b.sc-a.sc);
+  const r=UI.recs;
+  return `${head('','For You','Picks from your own lists that match what you rated highly, plus new suggestions from Claude.','')}
+  <section class="sec"><h2>From your lists</h2>${scored.length?`<div class="panel list">${scored.slice(0,10).map(c=>`<div class="li">${chno(c.ch)}<div class="main"><b>${esc(c.title)}</b><span>Because you liked ${esc(c.because.title)} · shares ${c.g.filter(g=>c.because.g.map(s=>s.toLowerCase()).includes(g.toLowerCase())).map(esc).join(', ')}</span></div><div class="end"><a class="btn sm ghost" href="#${c.ch}">Open</a></div></div>`).join('')}</div>`:'<div class="empty">Rate a few things 8 or higher and add genres to see matches from your watchlist and backlog.</div>'}</section>
+  <section class="sec"><h2>Something new</h2>
+    ${sync.sample?`<div class="ask"><span class="sp">Claude suggests titles you haven’t saved yet, based on what you rated highest.</span><button class="btn pri" data-act="recs" ${UI.recsBusy?'disabled':''}>${UI.recsBusy?'Thinking…':r?'Refresh picks':'Get picks'}</button></div>`:'<div class="empty">New suggestions from Claude appear here when this page is opened on claude.ai.</div>'}
+    ${UI.recsErr?`<div class="err">${esc(UI.recsErr)}</div>`:''}
+    ${r?`<div class="panel list">${r.map((x,i)=>`<div class="li">${chOf(x.channel)?chno(x.channel):''}<div class="main"><b>${esc(x.title)} ${x.year?`<span class="faint">${esc(x.year)}</span>`:''}</b><span>${esc(x.why)}</span></div><div class="end">${x.added?'<span class="tag">Added</span>':`<button class="btn sm" data-act="recAdd" data-i="${i}">Add to list</button>`}</div></div>`).join('')}</div><p class="small faint">${CAVEAT}</p>`:''}
+  </section>`;
+}
+
+/* ================= forms ================= */
+const F=(k,label,type='text',o={})=>({k,label,type,...o});
+const FORMS={
+  team:{title:'Team',ch:'sports',fields:[F('name','Team name','text',{full:true,req:true}),F('league','League','select',{opts:LEAGUES})]},
+  game:{title:'Game',ch:'sports',fields:[F('league','League','select',{opts:LEAGUES}),F('date','Date & time','datetime-local',{req:true}),F('away','Away team','text',{req:true}),F('home','Home team','text',{req:true}),F('awayScore','Away score','number'),F('homeScore','Home score','number'),F('status','Status','select',{opts:['scheduled','final']})]},
+  bet:{title:'Bet',ch:'betting',fields:[F('desc','Pick','text',{full:true,req:true}),F('date','Date','date'),F('sport','Sport','select',{opts:[...LEAGUES,'Other']}),F('odds','Odds (American)','number',{req:true}),F('stake','Stake ($)','number',{req:true}),F('book','Sportsbook'),F('result','Result','select',{opts:['open','win','loss','push']})]},
+  artist:{title:'Artist',ch:'hiphop',fields:[F('name','Artist name','text',{full:true,req:true}),F('underground','Track on Underground Radar','checkbox',{full:true})]},
+  release:{title:'Release',ch:'hiphop',lookup:'release',fields:[F('artist','Artist','text',{req:true}),F('title','Title','text',{req:true}),F('type','Type','select',{opts:['Album','EP','Single','Mixtape']}),F('date','Release date','date'),F('status','Status','select',{opts:['queued','heard']}),F('rating','Your rating (1–10)','number',{min:1,max:10,step:.5}),F('genre','Subgenre','text',{full:true})]},
+  group:{title:'Group',ch:'kpop',lookup:'group',fields:[F('name','Group name','text',{req:true}),F('agency','Agency'),F('debut','Debut date','date'),F('fandom','Fandom name'),F('socials','Official links','text',{full:true,hint:'Comma-separated URLs'}),
+    F('members','Members','lines',{full:true,hint:'One per line: Stage name | Real name | Birthday YYYY-MM-DD | Nationality | Position',cols:['stage','real','birthday','nationality','position']}),
+    F('albums','Discography','lines',{full:true,hint:'One per line: Title | Type | Date YYYY-MM-DD | track; track; track',cols:['title','type','date','tracks']}),
+    F('comebacks','Upcoming activities','lines',{full:true,hint:'One per line: Date YYYY-MM-DD | Title | Kind (Comeback, Concert, Anniversary…)',cols:['date','title','kind']})]},
+  movie:{title:'Movie',ch:'movies',lookup:'movie',fields:[F('title','Title','text',{req:true}),F('year','Year','number'),F('status','Status','select',{opts:['watchlist','watched']}),F('watched','Date watched','date'),F('rating','Your rating (out of 10)','number',{min:0,max:10,step:.5}),F('audience','Audience rating (out of 10)','number',{min:0,max:10,step:.1}),F('genres','Genres','text',{hint:'Comma-separated'}),F('director','Director'),F('cast','Cast','text',{full:true,hint:'Comma-separated'}),F('runtime','Runtime (min)','number'),F('release','Release date (if upcoming)','date'),F('rewatches','Rewatches','number',{min:0}),F('review','Your review','textarea',{full:true})]},
+  anime:{title:'Anime',ch:'anime',lookup:'anime',fields:[F('title','Title','text',{full:true,req:true}),F('status','Status','select',{opts:['watching','plan','completed','dropped']}),F('episodes','Total episodes','number'),F('watched','Episodes watched','number',{min:0}),F('epLength','Minutes per episode','number'),F('airDay','Airs on','select',{opts:['',0,1,2,3,4,5,6],labels:['Not airing',...DAYS]}),F('rating','Your rating (out of 10)','number',{min:0,max:10,step:.5}),F('genres','Genres','text',{hint:'Comma-separated'}),F('season','Season')]},
+  event:{title:'Event',ch:null,fields:[F('title','What','text',{full:true,req:true}),F('date','Date','date',{req:true}),F('channel','Channel','select',{opts:CH.map(c=>c.key),labels:CH.map(c=>c.name)}),F('note','Note','text',{full:true})]}
+};
+const COLL={team:()=>S.sports.teams,game:()=>S.sports.games,bet:()=>S.betting.bets,artist:()=>S.hiphop.artists,release:()=>S.hiphop.releases,group:()=>S.kpop.groups,movie:()=>S.movies.items,anime:()=>S.anime.items,event:()=>S.events};
+const COLLKEY={team:'sports',game:'sports',bet:'betting',artist:'hiphop',release:'hiphop',group:'kpop',movie:'movies',anime:'anime',event:'events'};
+// sports games use type "game"; video games use type "vgame"
+FORMS.vgame={title:'Video game',ch:'games',lookup:'game',fields:[F('title','Title','text',{full:true,req:true}),F('platform','Platform'),F('status','Status','select',{opts:['playing','backlog','done','wishlist']}),F('hours','Hours played','number',{min:0,step:.5}),F('completion','Completion %','number',{min:0,max:100}),F('rating','Your rating (out of 10)','number',{min:0,max:10,step:.5}),F('critic','Critic score (/100)','number'),F('achGot','Achievements earned','number'),F('achTotal','Achievements total','number'),F('release','Release date','date'),F('genres','Genres','text',{full:true,hint:'Comma-separated'})]};
+COLL.vgame=()=>S.games.items;COLLKEY.vgame='games';
+
+const fmtLines=(arr,cols)=>(arr||[]).map(o=>cols.map(c=>Array.isArray(o[c])?o[c].join('; '):(o[c]??'')).join(' | ')).join('\n');
+const parseLines=(txt,cols,prev)=>String(txt||'').split('\n').map(l=>l.trim()).filter(Boolean).map((l,i)=>{const p=l.split('|').map(s=>s.trim());const o={};cols.forEach((c,j)=>o[c]=c==='tracks'?(p[j]||'').split(';').map(s=>s.trim()).filter(Boolean):(p[j]||''));
+  if(cols.includes('tracks')){const old=(prev||[]).find(a=>a.title===o.title);o.rank=old?.rank||i+1;o.favs=(old?.favs||[]).filter(f=>o.tracks.includes(f))}return o});
+
+let modalState=null;
+function openForm(type,item,prefill){
+  const spec=FORMS[type];const isNew=!item;const v={...(prefill||{}),...(item||{})};
+  if(isNew){if(type==='bet'){v.date=v.date||D(0);v.result=v.result||'open';v.sport=v.sport||'NBA'}if(type==='event')v.date=v.date||UI.cal.sel;if(type==='game')v.status=v.status||'scheduled'}
+  modalState={type,item,spec};
+  const fld=f=>{const id='f-'+f.k;let val=v[f.k];
+    if(f.type==='lines')val=fmtLines(val,f.cols);else if(Array.isArray(val))val=val.join(', ');
+    let input;
+    if(f.type==='select')input=`<select id="${id}" name="${f.k}">${f.opts.map((o,i)=>`<option value="${esc(o)}" ${String(val??'')===String(o)?'selected':''}>${esc(f.labels?f.labels[i]:o)}</option>`).join('')}</select>`;
+    else if(f.type==='textarea'||f.type==='lines')input=`<textarea id="${id}" name="${f.k}" rows="${f.type==='lines'?5:4}">${esc(val)}</textarea>`;
+    else if(f.type==='checkbox')return `<div class="fld cb ${f.full?'full':''}"><input id="${id}" type="checkbox" name="${f.k}" ${val?'checked':''}><label for="${id}">${esc(f.label)}</label></div>`;
+    else input=`<input id="${id}" name="${f.k}" type="${f.type}" value="${esc(val)}" ${f.req?'required':''} ${f.min!=null?`min="${f.min}"`:''} ${f.max!=null?`max="${f.max}"`:''} ${f.step?`step="${f.step}"`:f.type==='number'?'step="any"':''}>`;
+    return `<div class="fld ${f.full?'full':''}"><label for="${id}">${esc(f.label)}</label>${input}${f.hint?`<span class="hint">${esc(f.hint)}</span>`:''}</div>`};
+  const lk=spec.lookup&&sync.sample?`<div class="ask"><span class="sp">Type a title above, then let Claude fill in the details.</span><button type="button" class="btn sm pri" data-act="lookup">Fill with Claude</button></div><div id="lkmsg" class="small faint"></div>`:'';
+  $('#modal-root').innerHTML=`<div class="scrim" data-act="scrim"><form class="modal" id="mform" role="dialog" aria-modal="true" aria-labelledby="mtitle" style="--c:${spec.ch?cvar(spec.ch):'var(--ink)'}">
+    <header>${spec.ch?chno(spec.ch):''}<h2 id="mtitle">${isNew?'Add':'Edit'} ${esc(spec.title.toLowerCase())}</h2><button type="button" class="btn sm ghost" data-act="close" aria-label="Close">✕</button></header>
+    <div class="body"><div class="form">${spec.fields.map(fld).join('')}</div>${lk}</div>
+    <footer>${!isNew?`<button type="button" class="btn ghost l" data-act="delete" style="color:var(--bad)">Delete</button>`:''}<button type="button" class="btn" data-act="close">Cancel</button><button class="btn pri" type="submit">${isNew?'Add':'Save'}</button></footer></form></div>`;
+  setTimeout(()=>$('#mform input,#mform select')?.focus(),30);
+}
+function closeModal(){$('#modal-root').innerHTML='';modalState=null}
+function readForm(){
+  const {spec,item}=modalState;const fd=$('#mform');const o={};
+  spec.fields.forEach(f=>{const el=fd.elements[f.k];if(!el)return;
+    if(f.type==='checkbox')o[f.k]=el.checked;
+    else if(f.type==='number')o[f.k]=el.value===''?null:Number(el.value);
+    else if(f.type==='lines')o[f.k]=parseLines(el.value,f.cols,item?.[f.k]);
+    else if(['genres','cast','socials'].includes(f.k))o[f.k]=list(el.value);
+    else if(f.k==='airDay')o[f.k]=el.value===''?'':Number(el.value);
+    else o[f.k]=el.value.trim()});
+  return o;
+}
+function submitForm(e){
+  e.preventDefault();const {type,item}=modalState;const o=readForm();const arr=COLL[type]();
+  if(type==='vgame'&&o.status==='done'&&!(item&&item.status==='done'))o.finished=D(0);
+  if(type==='anime'&&o.status==='completed'&&!(item&&item.status==='completed'))o.finished=D(0);
+  if(type==='movie'&&o.status==='watched'&&!o.watched)o.watched=D(0);
+  if(type==='game'&&o.homeScore!=null&&o.awayScore!=null&&!(item&&item.status==='final'))o.status='final';
+  if(item){Object.assign(item,o);delete item.ex}else{const n={id:uid(),...o};if(type==='bet')n.lines=[];if(type==='group'){n.followed=true;n.comebacks=n.comebacks||[]}arr.push(n)}
+  closeModal();commit(COLLKEY[type]);toast(item?'Saved':'Added');
+}
+async function doLookup(btn){
+  const {spec}=modalState;const fd=$('#mform');const key=fd.elements.title?'title':'name';
+  const q=(fd.elements[key]?.value||'').trim()||(fd.elements.artist?.value||'').trim();
+  const msg=$('#lkmsg');if(!q){msg.textContent='Type a title or name first.';return}
+  btn.disabled=true;btn.textContent='Looking up…';msg.textContent='';
+  try{const qq=spec.lookup==='release'&&fd.elements.artist?.value?`${fd.elements.artist.value} — ${fd.elements.title?.value||''}`:q;
+    const r=await askJSON(LOOKUP[spec.lookup](qq));
+    spec.fields.forEach(f=>{const el=fd.elements[f.k];if(!el||r[f.k]==null||r[f.k]==='')return;
+      if(f.type==='lines')el.value=fmtLines(r[f.k],f.cols);else if(Array.isArray(r[f.k]))el.value=r[f.k].join(', ');else el.value=r[f.k]});
+    msg.textContent='Filled in. '+CAVEAT;
+  }catch(e){msg.innerHTML=`<span class="err">${esc(e.message)}</span>`}
+  btn.disabled=false;btn.textContent='Fill with Claude';
+}
+
+/* ================= search ================= */
+function searchIndex(){
+  const ix=[];
+  S.sports.teams.forEach(t=>ix.push({ch:'sports',t:t.name,s:t.league,type:'team',id:t.id}));
+  S.sports.games.forEach(g=>ix.push({ch:'sports',t:`${g.away} @ ${g.home}`,s:`${g.league} · ${fmtD(g.date)}`,type:'game',id:g.id}));
+  S.betting.bets.forEach(b=>ix.push({ch:'betting',t:b.desc,s:`${fmtOdds(b.odds)} · ${b.result}`,type:'bet',id:b.id}));
+  S.hiphop.artists.forEach(a=>ix.push({ch:'hiphop',t:a.name,s:'Artist',type:'artist',id:a.id}));
+  S.hiphop.releases.forEach(r=>ix.push({ch:'hiphop',t:`${r.title}`,s:r.artist,type:'release',id:r.id}));
+  S.kpop.groups.forEach(g=>{ix.push({ch:'kpop',t:g.name,s:g.agency,type:'kgroup',id:g.id});(g.members||[]).forEach(m=>ix.push({ch:'kpop',t:m.stage,s:`${g.name}${m.real?' · '+m.real:''}`,type:'kgroup',id:g.id}));(g.albums||[]).forEach(a=>ix.push({ch:'kpop',t:a.title,s:`${g.name} · ${a.type}`,type:'kgroup',id:g.id}))});
+  S.movies.items.forEach(m=>ix.push({ch:'movies',t:m.title,s:[m.year,m.director].filter(Boolean).join(' · ')+((m.cast||[]).length?' · '+list(m.cast).join(', '):''),type:'movie',id:m.id}));
+  S.anime.items.forEach(a=>ix.push({ch:'anime',t:a.title,s:a.status,type:'anime',id:a.id}));
+  S.games.items.forEach(g=>ix.push({ch:'games',t:g.title,s:g.platform,type:'vgame',id:g.id}));
+  return ix;
+}
+let searchAI=null;
+function renderSearch(){
+  const q=$('#q').value.trim().toLowerCase();const box=$('#sres');
+  if(!q){box.hidden=true;return}
+  const hits=searchIndex().filter(h=>(h.t+' '+(h.s||'')).toLowerCase().includes(q)).slice(0,30);
+  const groups={};hits.forEach(h=>(groups[h.ch]=groups[h.ch]||[]).push(h));
+  let html=CH.filter(c=>groups[c.key]).map(c=>`<div class="grp" style="--c:${cvar(c.key)}">${c.name}</div>${groups[c.key].map(h=>`<button class="hit" data-act="openHit" data-type="${h.type}" data-id="${h.id}" data-ch="${h.ch}">${chno(h.ch)}<div style="min-width:0"><div>${esc(h.t)}</div><span>${esc(h.s||'')}</span></div></button>`).join('')}`).join('');
+  if(!hits.length)html=`<div class="pad small faint">Nothing saved matches “${esc(q)}”.</div>`;
+  if(sync.sample){
+    if(searchAI&&searchAI.q===q){const r=searchAI.r;html+=searchAI.err?`<div class="pad err">${esc(searchAI.err)}</div>`:r?`<div class="grp" style="--c:var(--ink-2)">From Claude</div><div class="pad small" style="padding-top:4px"><b>${esc(r.title)}</b> — ${esc(r.summary)}${chOf(r.channel)&&r.channel!=='sports'?`<div style="margin-top:8px"><button class="btn sm pri" data-act="aiSave">Save to ${esc(chOf(r.channel).name)}</button></div>`:''}</div>`:`<div class="pad small faint">Asking Claude…</div>`}
+    else html+=`<div style="padding:8px 12px;border-top:1px solid var(--line)"><button class="btn sm" data-act="aiSearch">Ask Claude about “${esc(q)}”</button></div>`;
+  }
+  box.innerHTML=html;box.hidden=false;
+}
+
+/* ================= router & render ================= */
+const VIEWS={home:vHome,calendar:vCalendar,foryou:vForYou,sports:vSports,betting:vBetting,hiphop:vHiphop,kpop:vKpop,movies:vMovies,anime:vAnime,games:vGames};
+const cur=()=>{const h=location.hash.slice(1);return VIEWS[h]?h:'home'};
+function render(){const v=cur();$('#rail').innerHTML=railHTML(v);
+  const ae=document.activeElement;const aid=ae&&ae.id&&$('#view').contains(ae)?ae.id:null;
+  $('#view').innerHTML=VIEWS[v]();if(aid){const el=document.getElementById(aid);if(el){el.focus();try{el.setSelectionRange?.(el.value.length,el.value.length)}catch(e){}}}}
+addEventListener('hashchange',()=>{UI.kpopSel=null;UI.randomGame=null;render();scrollTo(0,0)});
+
+/* ================= actions ================= */
+const find=(type,id)=>COLL[type]().find(x=>x.id===id);
+const ACT={
+  add:d=>openForm(d.type==='game'&&cur()==='games'?'vgame':d.type),
+  edit:d=>{const t=d.type==='game'&&cur()==='games'?'vgame':d.type;openForm(t,find(t,d.id))},
+  close:closeModal, scrim:(d,t,e)=>{if(e.target===t)closeModal()},
+  delete:()=>{const {type,item}=modalState;const arr=COLL[type]();const b=$('#mform [data-act="delete"]');if(b.dataset.armed!=='1'){b.dataset.armed='1';b.textContent='Tap again to delete';return}arr.splice(arr.indexOf(item),1);if(type==='group')UI.kpopSel=null;closeModal();commit(COLLKEY[type]);toast('Deleted')},
+  lookup:(d,t)=>doLookup(t),
+  clearEx:()=>{for(const k of KEYS){if(Array.isArray(S[k]))S[k]=S[k].filter(x=>!x.ex);else for(const kk of Object.keys(S[k]))if(Array.isArray(S[k][kk]))S[k][kk]=S[k][kk].filter(x=>!x.ex)}S.meta.examples=false;save(...KEYS,'meta');render();toast('Examples cleared')},
+  keepEx:()=>{S.meta.examples='kept';save(...KEYS,'meta');render()},
+  tonight:pickTonight,
+  epPlus:d=>{const a=find('anime',d.id);a.watched=(a.watched||0)+1;if(a.episodes&&a.watched>=a.episodes){a.watched=a.episodes;a.status='completed';a.finished=D(0);toast(`Finished ${a.title}`)}commit('anime')},
+  epMinus:d=>{const a=find('anime',d.id);a.watched=Math.max(0,(a.watched||0)-1);commit('anime')},
+  hrPlus:d=>{const g=find('vgame',d.id);g.hours=(Number(g.hours)||0)+1;commit('games');toast(`${g.title}: ${g.hours}h`)},
+  calSel:d=>{UI.cal.sel=d.d;render()},
+  calMode:d=>{UI.cal.mode=d.m;render()},
+  calNav:d=>{const c=UI.cal;const n=Number(d.n);c.cursor=c.mode==='month'?new Date(c.cursor.getFullYear(),c.cursor.getMonth()+n,1):addDays(c.cursor,7*n);render()},
+  calToday:()=>{UI.cal.cursor=today();UI.cal.sel=iso(today());render()},
+  calFilter:d=>{const f=UI.cal.filters;f.has(d.k)?f.delete(d.k):f.add(d.k);render()},
+  addEvent:()=>openForm('event'),
+  delEvent:d=>{S.events=S.events.filter(e=>e.id!==d.id);commit('events')},
+  league:d=>{UI.league=d.l;render()},
+  betPeriod:d=>{UI.betPeriod=d.p;render()},
+  settle:d=>{const b=find('bet',d.id);b.result=d.r;delete b.ex;commit('betting');toast(`Settled: ${d.r} ${money(profit(b))}`)},
+  betExpand:d=>{UI.betOpen=UI.betOpen===d.id?null:d.id;render()},
+  lineAdd:d=>{const el=document.getElementById('ln-'+d.id);const v=Number(el.value);if(!el.value||isNaN(v)){toast('Enter the current odds, like -115');return}const b=find('bet',d.id);(b.lines=b.lines||[]).push({t:D(0),odds:v});commit('betting')},
+  lineDel:d=>{const b=find('bet',d.id);b.lines.splice(Number(d.i),1);commit('betting')},
+  oddsAdd:()=>{UI.odds.push({book:'Book '+(UI.odds.length+1),odds:''});render()},
+  oddsDel:d=>{UI.odds.splice(Number(d.i),1);render()},
+  kpopOpen:d=>{UI.kpopSel=d.id||null;render();scrollTo(0,0)},
+  follow:d=>{const g=find('group',d.id);g.followed=!g.followed;commit('kpop')},
+  rank:d=>{const g=find('group',d.id);const ranked=g.albums.map((a,i)=>({a,i})).sort((x,y)=>(x.a.rank||99)-(y.a.rank||99));ranked.forEach((r,n)=>r.a.rank=n+1);const a=g.albums[Number(d.i)];const n=a.rank-1+Number(d.d);const other=ranked[n]?.a;if(other){other.rank=a.rank;a.rank=n+1}commit('kpop')},
+  fav:d=>{const g=find('group',d.id);const a=g.albums[Number(d.i)];a.favs=a.favs||[];a.favs.includes(d.t)?a.favs.splice(a.favs.indexOf(d.t),1):a.favs.push(d.t);commit('kpop')},
+  movieTab:d=>{UI.movieTab=d.t;render()},
+  mrank:d=>{const ranked=S.movies.items.filter(m=>m.status==='watched').sort((a,b)=>(a.rank||999)-(b.rank||999)||(b.rating||0)-(a.rating||0));ranked.forEach((m,n)=>m.rank=n+1);const m=ranked.find(x=>x.id===d.id);const o=ranked[m.rank-1+Number(d.d)];if(o){[o.rank,m.rank]=[m.rank,o.rank]}commit('movies')},
+  randomGame:()=>{const pool=S.games.items.filter(g=>g.status==='backlog'||g.status==='playing');if(!pool.length){toast('Your backlog is empty');return}let p;do{p=pool[Math.floor(Math.random()*pool.length)]}while(pool.length>1&&p.id===UI.randomGame);UI.randomGame=p.id;render()},
+  recs:async()=>{UI.recsBusy=true;UI.recsErr='';render();
+    const top=[...S.movies.items.filter(m=>m.rating>=8).map(m=>'movie: '+m.title),...S.anime.items.filter(a=>a.rating>=8).map(a=>'anime: '+a.title),...S.games.items.filter(g=>g.rating>=8).map(g=>'game: '+g.title),...S.hiphop.releases.filter(r=>r.rating>=8).map(r=>`hip-hop: ${r.artist} — ${r.title}`),...S.kpop.groups.filter(g=>g.followed).map(g=>'k-pop group: '+g.name)];
+    const have=searchIndex().map(h=>h.t).slice(0,150);
+    try{const r=await askJSON(`Someone loves these:\n${top.join('\n')||'(nothing rated yet — suggest broadly popular picks)'}\n\nThey already have: ${have.join('; ')}\n\nSuggest 8 things they do NOT already have, mixing channels. Reply with JSON only: an array of {"channel":"movies"|"anime"|"games"|"hiphop"|"kpop","title":string (for hiphop use "Artist — Album"),"year":string,"why":one short sentence tying it to their taste}.`);
+      UI.recs=(Array.isArray(r)?r:r.items||[]).filter(x=>x&&x.title).slice(0,8)}catch(e){UI.recsErr=e.message}
+    UI.recsBusy=false;render()},
+  recAdd:d=>{const x=UI.recs[Number(d.i)];const ex={id:uid()};
+    if(x.channel==='movies')S.movies.items.push({...ex,title:x.title,year:Number(x.year)||null,status:'watchlist',genres:[]});
+    else if(x.channel==='anime')S.anime.items.push({...ex,title:x.title,status:'plan',watched:0,genres:[]});
+    else if(x.channel==='games')S.games.items.push({...ex,title:x.title,status:'backlog',hours:0,completion:0,genres:[]});
+    else if(x.channel==='hiphop'){const [a,t]=x.title.split(' — ');S.hiphop.releases.push({...ex,artist:t?a:'',title:t||a,type:'Album',status:'queued'})}
+    else if(x.channel==='kpop')S.kpop.groups.push({...ex,name:x.title,followed:true,members:[],albums:[],comebacks:[],socials:[]});
+    x.added=true;commit(x.channel==='games'?'games':x.channel);toast(`Added to ${chOf(x.channel)?.name||'list'}`)},
+  openHit:d=>{$('#sres').hidden=true;$('#q').value='';if(d.type==='kgroup'){location.hash='#kpop';setTimeout(()=>{UI.kpopSel=d.id;render()},0);return}if(cur()!==d.ch)location.hash='#'+d.ch;setTimeout(()=>openForm(d.type,find(d.type,d.id)),0)},
+  aiSearch:async()=>{const q=$('#q').value.trim();searchAI={q:q.toLowerCase(),r:null};renderSearch();
+    try{const r=await askJSON(`Identify "${q}" — it may be an athlete, team, rapper, K-pop group or idol, movie, anime, or video game. Reply with JSON only: {"channel":"sports"|"hiphop"|"kpop"|"movies"|"anime"|"games"|"none","title":canonical name,"summary":two short factual sentences}. If unsure, say so in summary.`);searchAI.r=r}catch(e){searchAI.err=e.message}
+    if(searchAI.q===$('#q').value.trim().toLowerCase())renderSearch()},
+  aiSave:()=>{const r=searchAI.r;$('#sres').hidden=true;$('#q').value='';const map={hiphop:'release',kpop:'group',movies:'movie',anime:'anime',games:'vgame'};const t=map[r.channel];if(!t)return;location.hash='#'+r.channel;
+    setTimeout(()=>{openForm(t,null,t==='group'?{name:r.title}:t==='release'?{title:r.title}:{title:r.title});setTimeout(()=>{const b=$('#mform [data-act="lookup"]');if(b)doLookup(b)},60)},0)}
+};
+document.addEventListener('click',e=>{const t=e.target.closest('[data-act]');if(!t)return;const a=ACT[t.dataset.act];if(!a)return;if(t.tagName==='A')return;a(t.dataset,t,e)});
+document.addEventListener('submit',e=>{if(e.target.id==='mform')submitForm(e)});
+document.addEventListener('change',e=>{const t=e.target;const k=t.dataset.chg;if(!k)return;
+  if(k==='unit'){S.betting.unit=Math.max(1,Number(t.value)||25);commit('betting')}
+  if(k==='oddsBook'){UI.odds[Number(t.dataset.i)].book=t.value}
+  if(k==='oddsVal'){UI.odds[Number(t.dataset.i)].odds=t.value===''?'':Number(t.value);render()}});
+document.addEventListener('keydown',e=>{if(e.key==='Escape'){if(modalState)closeModal();else{$('#sres').hidden=true}}
+  if(e.key==='/'&&!/INPUT|TEXTAREA|SELECT/.test(document.activeElement.tagName)){e.preventDefault();$('#q').focus()}});
+$('#q').addEventListener('input',()=>{searchAI=null;renderSearch()});
+$('#q').addEventListener('focus',renderSearch);
+document.addEventListener('click',e=>{if(!e.target.closest('.search'))$('#sres').hidden=true},true);
+
+function tick(){const n=new Date();$('#clk').textContent=n.toLocaleTimeString(undefined,{hour:'numeric',minute:'2-digit'})+' · '+n.toLocaleDateString(undefined,{weekday:'short'})}
+tick();setInterval(tick,30000);
+render();initCaps();
+</script>
+
+</body></html>

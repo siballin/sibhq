@@ -636,6 +636,44 @@ setInterval(()=>{if(document.hidden)return;const v=cur();if(v!=='sports'&&v!=='h
   const t=NBA.days[iso(today())];if(NBA.sel!==iso(today())&&t&&t.some(e=>e.state==='in'))loadDay(iso(today()),true)},30000);
 setInterval(()=>{if(!document.hidden&&Object.values(NBA.sched).some(v=>v&&v.events.some(e=>e.state==='in')))loadTeamScheds()},120000);
 
+
+/* ================= team directory ================= */
+const TEAM_DIR={
+  NBA:{'Eastern · Atlantic':['Boston Celtics','Brooklyn Nets','New York Knicks','Philadelphia 76ers','Toronto Raptors'],
+    'Eastern · Central':['Chicago Bulls','Cleveland Cavaliers','Detroit Pistons','Indiana Pacers','Milwaukee Bucks'],
+    'Eastern · Southeast':['Atlanta Hawks','Charlotte Hornets','Miami Heat','Orlando Magic','Washington Wizards'],
+    'Western · Northwest':['Denver Nuggets','Minnesota Timberwolves','Oklahoma City Thunder','Portland Trail Blazers','Utah Jazz'],
+    'Western · Pacific':['Golden State Warriors','LA Clippers','Los Angeles Lakers','Phoenix Suns','Sacramento Kings'],
+    'Western · Southwest':['Dallas Mavericks','Houston Rockets','Memphis Grizzlies','New Orleans Pelicans','San Antonio Spurs']},
+  NFL:{'AFC East':['Buffalo Bills','Miami Dolphins','New England Patriots','New York Jets'],
+    'AFC North':['Baltimore Ravens','Cincinnati Bengals','Cleveland Browns','Pittsburgh Steelers'],
+    'AFC South':['Houston Texans','Indianapolis Colts','Jacksonville Jaguars','Tennessee Titans'],
+    'AFC West':['Denver Broncos','Kansas City Chiefs','Las Vegas Raiders','Los Angeles Chargers'],
+    'NFC East':['Dallas Cowboys','New York Giants','Philadelphia Eagles','Washington Commanders'],
+    'NFC North':['Chicago Bears','Detroit Lions','Green Bay Packers','Minnesota Vikings'],
+    'NFC South':['Atlanta Falcons','Carolina Panthers','New Orleans Saints','Tampa Bay Buccaneers'],
+    'NFC West':['Arizona Cardinals','Los Angeles Rams','San Francisco 49ers','Seattle Seahawks']},
+  MLB:{'AL East':['Baltimore Orioles','Boston Red Sox','New York Yankees','Tampa Bay Rays','Toronto Blue Jays'],
+    'AL Central':['Chicago White Sox','Cleveland Guardians','Detroit Tigers','Kansas City Royals','Minnesota Twins'],
+    'AL West':['Athletics','Houston Astros','Los Angeles Angels','Seattle Mariners','Texas Rangers'],
+    'NL East':['Atlanta Braves','Miami Marlins','New York Mets','Philadelphia Phillies','Washington Nationals'],
+    'NL Central':['Chicago Cubs','Cincinnati Reds','Milwaukee Brewers','Pittsburgh Pirates','St. Louis Cardinals'],
+    'NL West':['Arizona Diamondbacks','Colorado Rockies','Los Angeles Dodgers','San Diego Padres','San Francisco Giants']}};
+const DIR_LEAGUES=Object.keys(TEAM_DIR);
+const dirTeams=lg=>Object.values(TEAM_DIR[lg]).flat();
+const followedTeam=(name,lg)=>S.sports.teams.find(t=>t.league===lg&&t.name.toLowerCase()===name.toLowerCase());
+function teamDirSection(){
+  const lg=DIR_LEAGUES.includes(UI.league)?UI.league:(DIR_LEAGUES.includes(UI.dirLg)?UI.dirLg:'NBA');
+  const q=(UI.dirQ||'').trim().toLowerCase();const n=dirTeams(lg).filter(t=>followedTeam(t,lg)).length;
+  return `<section class="sec" id="all-teams"><h2>All teams <span class="faint" style="text-transform:none;letter-spacing:0;font-weight:500">${n} of ${dirTeams(lg).length} ${lg} teams followed</span></h2>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">${DIR_LEAGUES.includes(UI.league)?'':`<div class="chips" role="group" aria-label="Team league">${DIR_LEAGUES.map(l=>`<button class="chip" aria-pressed="${l===lg}" data-act="dirLg" data-l="${l}">${l}</button>`).join('')}</div>`}
+      <label class="sr" for="dir-q">Find a team</label><input id="dir-q" class="btn sm" style="font-weight:500;min-width:0;flex:1;max-width:260px" type="search" placeholder="Find a team" value="${esc(UI.dirQ||'')}" data-inp="dirq"></div>
+    <div class="grid3">${Object.entries(TEAM_DIR[lg]).map(([div,teams])=>{const ts=teams.filter(t=>!q||t.toLowerCase().includes(q));if(!ts.length)return '';
+      return `<div class="panel"><div class="sh" style="padding:12px 14px 4px">${esc(div)}</div><div class="list">${ts.map(t=>{const f=followedTeam(t,lg);
+        return `<div class="li" style="padding-block:8px"><div class="main"><b>${esc(t)}</b></div><div class="end"><button class="btn sm ${f?'ch':''}" style="--c:${cvar('sports')}" data-act="dirFollow" data-l="${lg}" data-t="${esc(t)}" aria-pressed="${!!f}" aria-label="${f?'Unfollow':'Follow'} ${esc(t)}">${f?'★ Following':'Follow'}</button></div></div>`}).join('')}</div></div>`}).join('')||'<div class="empty">No team matches that search.</div>'}</div>
+    ${lg==='NBA'?'<p class="small faint">Following an NBA team loads its real schedule and record from ESPN.</p>':`<p class="small faint">${lg} schedules aren’t connected yet, so add ${lg} games with “Add game.”</p>`}</section>`;
+}
+
 /* ---------- HOME ---------- */
 function vHome(){
   const now=new Date();const t0=today();
@@ -764,6 +802,7 @@ function vSports(){
     return `<div class="tile" style="--c:${cvar('sports')}"><div class="k">${esc(t.league)}</div><div class="v">${esc(t.name)}</div><div class="s"><span class="num">${r.w}–${r.l}${r.d?'–'+r.d:''}</span> ${t.league==='NBA'&&NBA.sched[t.name]?'this season':'in logged games'}</div><div class="s">${nx?`Next: ${nx.home===t.name?'vs '+esc(nx.away):'@ '+esc(nx.home)}, ${rel(nx.date)}`:'No upcoming game logged'}</div><div class="row"><a class="btn sm ghost" href="https://www.espn.com/${ESPN[t.league]||''}/scoreboard" target="_blank" rel="noopener">ESPN scoreboard</a><button class="btn sm ghost" data-act="edit" data-type="team" data-id="${t.id}">Edit</button></div></div>`}).join('')}</div>`:'<div class="empty">Follow a team to see its record and next game here.</div>'}</section>
   <div class="grid2"><section class="sec"><h2>Upcoming</h2>${up.length?`<div class="panel list">${up.map(gameRow).join('')}</div>`:'<div class="empty">No upcoming games logged.</div>'}</section>
   <section class="sec"><h2>Results</h2>${fin.length?`<div class="panel list">${fin.map(gameRow).join('')}</div>`:'<div class="empty">Final scores show up here.</div>'}</section></div>
+  ${L==='All'||DIR_LEAGUES.includes(L)?teamDirSection():''}
   <p class="small faint">NBA games come live from ESPN. Other leagues are logged by you for now; ESPN links open each league’s live scoreboard.</p>`;
 }
 
@@ -1061,7 +1100,7 @@ function vForYou(){
 /* ================= forms ================= */
 const F=(k,label,type='text',o={})=>({k,label,type,...o});
 const FORMS={
-  team:{title:'Team',ch:'sports',fields:[F('name','Team name','text',{full:true,req:true,dl:'nba-teams',hint:'For NBA teams, pick the full name from the list so the real schedule loads'}),F('league','League','select',{opts:LEAGUES})]},
+  team:{title:'Team',ch:'sports',fields:[F('name','Team name','text',{full:true,req:true,dl:'all-teams',hint:'Pick from the list for NBA, NFL and MLB teams. NBA teams load their real schedule.'}),F('league','League','select',{opts:LEAGUES})]},
   game:{title:'Game',ch:'sports',fields:[F('league','League','select',{opts:LEAGUES}),F('date','Date & time','datetime-local',{req:true}),F('away','Away team','text',{req:true}),F('home','Home team','text',{req:true}),F('awayScore','Away score','number'),F('homeScore','Home score','number'),F('status','Status','select',{opts:['scheduled','final']})]},
   bet:{title:'Bet',ch:'betting',fields:[F('date','Date placed','date',{req:true}),F('sport','Sport','select',{opts:BET_SPORTS}),F('event','Event','text',{full:true,hint:'e.g. Lakers @ Spurs'}),F('type','Bet type','select',{opts:BET_TYPES,labels:BET_TYPES.map(t=>TYPE_LABEL[t])}),F('pick','Pick','text',{req:true,hint:'e.g. Spurs −2.5'}),F('odds','Odds (American)','number',{step:'1',hint:'Parlays fill this from their legs'}),F('stake','Stake ($)','number',{req:true,min:.01,step:'0.01'}),F('book','Sportsbook'),F('status','Status','select',{opts:BET_STATUSES,labels:BET_STATUSES.map(x=>STATUS_LABEL[x])}),F('closing','Closing odds (optional)','number',{step:'1',hint:'Used for closing line value (CLV)'}),F('tags','Tags','text',{full:true,hint:'Comma-separated, e.g. model, live, hedge'}),F('legs','Parlay legs','lines',{full:true,cols:['event','pick','odds','status'],hint:'Parlays only. One leg per line: Event | Pick | Odds | Status (optional: pending, won, lost, draw, void)'}),F('notes','Notes','textarea',{full:true})],
     prepare(o,item){o.tags=list(o.tags);o.legs=(o.legs||[]).map(l=>({event:l.event||'',pick:l.pick||'',odds:Number(l.odds),status:BET_STATUSES.includes(String(l.status).toLowerCase())?String(l.status).toLowerCase():'pending'}));
@@ -1104,7 +1143,7 @@ function openForm(type,item,prefill){
     if(f.type==='select')input=`<select id="${id}" name="${f.k}">${f.opts.map((o,i)=>`<option value="${esc(o)}" ${String(val??'')===String(o)?'selected':''}>${esc(f.labels?f.labels[i]:o)}</option>`).join('')}</select>`;
     else if(f.type==='textarea'||f.type==='lines')input=`<textarea id="${id}" name="${f.k}" rows="${f.type==='lines'?5:4}">${esc(val)}</textarea>`;
     else if(f.type==='checkbox')return `<div class="fld cb ${f.full?'full':''}"><input id="${id}" type="checkbox" name="${f.k}" ${val?'checked':''}><label for="${id}">${esc(f.label)}</label></div>`;
-    else input=`${f.dl&&NBA.teams?`<datalist id="${f.dl}">${NBA.teams.map(t=>`<option value="${esc(t.name)}">`).join('')}</datalist>`:''}<input id="${id}" name="${f.k}" type="${f.type}" value="${esc(val)}" ${f.dl?`list="${f.dl}"`:''} ${f.req?'required':''} ${f.min!=null?`min="${f.min}"`:''} ${f.max!=null?`max="${f.max}"`:''} ${f.step?`step="${f.step}"`:f.type==='number'?'step="any"':''}>`;
+    else input=`${f.dl?`<datalist id="${f.dl}">${DIR_LEAGUES.flatMap(l=>dirTeams(l).map(t=>`<option value="${esc(t)}">${l}</option>`)).join('')}</datalist>`:''}<input id="${id}" name="${f.k}" type="${f.type}" value="${esc(val)}" ${f.dl?`list="${f.dl}"`:''} ${f.req?'required':''} ${f.min!=null?`min="${f.min}"`:''} ${f.max!=null?`max="${f.max}"`:''} ${f.step?`step="${f.step}"`:f.type==='number'?'step="any"':''}>`;
     return `<div class="fld ${f.full?'full':''}"><label for="${id}">${esc(f.label)}</label>${input}${f.hint?`<span class="hint">${esc(f.hint)}</span>`:''}</div>`};
   const lk=spec.lookup&&sync.sample?`<div class="ask"><span class="sp">Type a title above, then let Claude fill in the details.</span><button type="button" class="btn sm pri" data-act="lookup">Fill with Claude</button></div><div id="lkmsg" class="small faint"></div>`:'';
   $('#modal-root').innerHTML=`<div class="scrim" data-act="scrim"><form class="modal" id="mform" role="dialog" aria-modal="true" aria-labelledby="mtitle" style="--c:${spec.ch?cvar(spec.ch):'var(--ink)'}">
@@ -1210,6 +1249,8 @@ const ACT={
   league:d=>{UI.league=d.l;render()},
   nbaDay:d=>{NBA.sel=d.d;render()},
   nbaRefresh:()=>{loadDay(NBA.sel);loadTeamScheds()},
+  dirLg:d=>{UI.dirLg=d.l;render()},
+  dirFollow:d=>{const f=followedTeam(d.t,d.l);if(f){S.sports.teams.splice(S.sports.teams.indexOf(f),1);toast(`Unfollowed ${d.t}`)}else{S.sports.teams.push({id:uid(),name:d.t,league:d.l});toast(`Following ${d.t}`)}commit('sports')},
   betPeriod:d=>{UI.betPeriod=d.p;render()},
   settle:d=>{const b=find('bet',d.id);setStatus(b,d.r);delete b.ex;commit('betting');toast(d.r==='won'||d.r==='lost'?`${STATUS_LABEL[d.r]}: ${money(profit(b))} (${fmtU(profit(b))})`:`${STATUS_LABEL[d.r]}: ${money(payout(b))} returned`)},
   betDim:d=>{UI.betDim=d.k;render()},
@@ -1274,6 +1315,7 @@ document.addEventListener('keydown',e=>{if(e.key==='Escape'){if(modalState)close
   if(e.key==='/'&&!/INPUT|TEXTAREA|SELECT/.test(document.activeElement.tagName)){e.preventDefault();$('#q').focus()}});
 $('#q').addEventListener('input',()=>{searchAI=null;renderSearch()});
 document.addEventListener('input',e=>{const t=e.target;
+  if(t.dataset&&t.dataset.inp==='dirq'){UI.dirQ=t.value;clearTimeout(UI.dirT);UI.dirT=setTimeout(render,150)}
   if(t.dataset&&t.dataset.inp==='bfq'){UI.bf.q=t.value;clearTimeout(UI.bfT);UI.bfT=setTimeout(render,200)}
   if(t.id==='f-legs'){const legs=parseLines(t.value,['event','pick','odds','status']).map(l=>({odds:Number(l.odds)}));const ok=legs.filter(l=>validOdds(l.odds));const el=$('#legcombo');if(el)el.textContent=ok.length>=2?`Combined parlay odds: ${fmtOdds(amOf(comboDec(ok)))} (${comboDec(ok).toFixed(2)} decimal)${ok.length<legs.length?' — some legs have invalid odds':''}`:''}});
 $('#q').addEventListener('focus',renderSearch);

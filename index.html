@@ -330,20 +330,43 @@ function examples(){
   const bets=[];
   for(let i=0;i<34;i++){const p=picks[Math.floor(r()*picks.length)];const odds=[-110,-115,-120,+105,+120,+145,-130,+170][Math.floor(r()*8)];
     const res=r()<.53?'win':(r()<.08?'push':'loss');bets.push({id:uid(),...ex,date:D(-75+Math.floor(i*2.15)),sport:p[0],desc:p[1],odds,stake:[10,20,25,15][Math.floor(r()*4)],result:res,book:['FanDuel','DraftKings','BetMGM'][Math.floor(r()*3)],lines:[]})}
-  bets.push({id:uid(),...ex,date:D(0),sport:'NBA',desc:'Spurs −2.5 vs Lakers',odds:-110,stake:25,result:'open',book:'FanDuel',lines:[{t:D(-2),odds:-105},{t:D(-1),odds:-110},{t:D(0),odds:-118}]});
-  bets.push({id:uid(),...ex,date:D(0),sport:'NFL',desc:'Giants +7',odds:-108,stake:20,result:'open',book:'DraftKings',lines:[{t:D(-3),odds:-110},{t:D(0),odds:-104}]});
-  bets.push({id:uid(),...ex,date:D(-1),sport:'NHL',desc:'Devils/Rangers u6.5',odds:+102,stake:15,result:'open',book:'BetMGM',lines:[]});
+  bets.push({id:uid(),...ex,date:D(0),sport:'NBA',desc:'Spurs −4.5 @ Trail Blazers',odds:-110,stake:25,result:'open',book:'FanDuel',lines:[{t:D(-2),odds:-105},{t:D(-1),odds:-110},{t:D(0),odds:-118}]});
+  bets.push({id:uid(),...ex,date:D(0),sport:'NFL',desc:'Giants +3.5 @ Eagles',odds:-108,stake:20,result:'open',book:'DraftKings',lines:[{t:D(-3),odds:-110},{t:D(0),odds:-104}]});
+  bets.push({id:uid(),...ex,date:D(-1),sport:'NHL',desc:'Devils/Islanders u6.5',odds:+102,stake:15,result:'open',book:'BetMGM',lines:[]});
   return {
     sports:{teams:[{id:uid(),...ex,name:'San Antonio Spurs',league:'NBA'},{id:uid(),...ex,name:'New York Giants',league:'NFL'},{id:uid(),...ex,name:'New Jersey Devils',league:'NHL'}],
+      // Real 2026-27 schedules (times ET where announced; date only where not).
       games:[
-        {id:uid(),...ex,league:'NBA',away:'Los Angeles Lakers',home:'San Antonio Spurs',date:DT(0,'20:00'),status:'scheduled'},
-        {id:uid(),...ex,league:'NFL',away:'New York Giants',home:'Chicago Bears',date:DT(1,'13:00'),status:'scheduled'},
-        {id:uid(),...ex,league:'NHL',away:'New Jersey Devils',home:'New York Rangers',date:DT(2,'19:00'),status:'scheduled'},
-        {id:uid(),...ex,league:'NBA',away:'San Antonio Spurs',home:'Denver Nuggets',date:DT(4,'21:00'),status:'scheduled'},
-        {id:uid(),...ex,league:'NBA',away:'Houston Rockets',home:'San Antonio Spurs',date:DT(-2,'20:00'),status:'final',awayScore:109,homeScore:118},
-        {id:uid(),...ex,league:'NFL',away:'Philadelphia Eagles',home:'New York Giants',date:DT(-6,'13:00'),status:'final',awayScore:27,homeScore:20},
-        {id:uid(),...ex,league:'NHL',away:'Boston Bruins',home:'New Jersey Devils',date:DT(-3,'19:00'),status:'final',awayScore:2,homeScore:4},
-        {id:uid(),...ex,league:'NBA',away:'San Antonio Spurs',home:'Phoenix Suns',date:DT(-5,'22:00'),status:'final',awayScore:121,homeScore:115}]},
+        {id:uid(),...ex,league:'NBA',away:'Utah Jazz',home:'San Antonio Spurs',date:'2026-11-02',status:'final',awayScore:97,homeScore:119},
+        {id:uid(),...ex,league:'NBA',away:'Dallas Mavericks',home:'San Antonio Spurs',date:'2026-11-04',status:'final',awayScore:111,homeScore:112},
+        {id:uid(),...ex,league:'NBA',away:'San Antonio Spurs',home:'Portland Trail Blazers',date:'2026-11-07T22:00',status:'scheduled'},
+        {id:uid(),...ex,league:'NBA',away:'San Antonio Spurs',home:'Phoenix Suns',date:'2026-11-09',status:'scheduled'},
+        {id:uid(),...ex,league:'NBA',away:'San Antonio Spurs',home:'Chicago Bulls',date:'2026-11-11',status:'scheduled'},
+        {id:uid(),...ex,league:'NBA',away:'Golden State Warriors',home:'San Antonio Spurs',date:'2026-11-13T21:30',status:'scheduled'},
+        {id:uid(),...ex,league:'NBA',away:'San Antonio Spurs',home:'Utah Jazz',date:'2026-11-15',status:'scheduled'},
+        {id:uid(),...ex,league:'NBA',away:'Detroit Pistons',home:'San Antonio Spurs',date:'2026-11-17',status:'scheduled'},
+        {id:uid(),...ex,league:'NBA',away:'LA Clippers',home:'San Antonio Spurs',date:'2026-11-19',status:'scheduled'},
+        {id:uid(),...ex,league:'NBA',away:'New Orleans Pelicans',home:'San Antonio Spurs',date:'2026-11-21',status:'scheduled'},
+        {id:uid(),...ex,league:'NBA',away:'San Antonio Spurs',home:'Sacramento Kings',date:'2026-11-23',status:'scheduled'},
+        {id:uid(),...ex,league:'NBA',away:'San Antonio Spurs',home:'Portland Trail Blazers',date:'2026-11-25',status:'scheduled'},
+        {id:uid(),...ex,league:'NBA',away:'Los Angeles Lakers',home:'San Antonio Spurs',date:'2026-11-27',status:'scheduled'},
+        {id:uid(),...ex,league:'NBA',away:'Boston Celtics',home:'San Antonio Spurs',date:'2026-11-29',status:'scheduled'},
+        {id:uid(),...ex,league:'NBA',away:'San Antonio Spurs',home:'Milwaukee Bucks',date:'2026-11-30',status:'scheduled'},
+        {id:uid(),...ex,league:'NFL',away:'New York Giants',home:'Philadelphia Eagles',date:'2026-11-08T13:00',status:'scheduled'},
+        {id:uid(),...ex,league:'NFL',away:'Washington Commanders',home:'New York Giants',date:'2026-11-12T20:15',status:'scheduled'},
+        {id:uid(),...ex,league:'NFL',away:'Jacksonville Jaguars',home:'New York Giants',date:'2026-11-22T13:00',status:'scheduled'},
+        {id:uid(),...ex,league:'NHL',away:'New Jersey Devils',home:'New York Islanders',date:'2026-11-07T19:00',status:'scheduled'},
+        {id:uid(),...ex,league:'NHL',away:'New Jersey Devils',home:'Toronto Maple Leafs',date:'2026-11-08',status:'scheduled'},
+        {id:uid(),...ex,league:'NHL',away:'New Jersey Devils',home:'Winnipeg Jets',date:'2026-11-10',status:'scheduled'},
+        {id:uid(),...ex,league:'NHL',away:'Washington Capitals',home:'New Jersey Devils',date:'2026-11-12',status:'scheduled'},
+        {id:uid(),...ex,league:'NHL',away:'New Jersey Devils',home:'Washington Capitals',date:'2026-11-14',status:'scheduled'},
+        {id:uid(),...ex,league:'NHL',away:'Montreal Canadiens',home:'New Jersey Devils',date:'2026-11-18',status:'scheduled'},
+        {id:uid(),...ex,league:'NHL',away:'New Jersey Devils',home:'St. Louis Blues',date:'2026-11-21',status:'scheduled'},
+        {id:uid(),...ex,league:'NHL',away:'Columbus Blue Jackets',home:'New Jersey Devils',date:'2026-11-23',status:'scheduled'},
+        {id:uid(),...ex,league:'NHL',away:'New Jersey Devils',home:'Columbus Blue Jackets',date:'2026-11-25',status:'scheduled'},
+        {id:uid(),...ex,league:'NHL',away:'Calgary Flames',home:'New Jersey Devils',date:'2026-11-27T13:00',status:'scheduled'},
+        {id:uid(),...ex,league:'NHL',away:'Winnipeg Jets',home:'New Jersey Devils',date:'2026-11-28',status:'scheduled'}
+      ]},
     betting:{unit:25,bets},
     hiphop:{artists:[{id:uid(),...ex,name:'Kendrick Lamar',underground:false},{id:uid(),...ex,name:'Clipse',underground:false},{id:uid(),...ex,name:'billy woods',underground:true},{id:uid(),...ex,name:'MIKE',underground:true},{id:uid(),...ex,name:'Earl Sweatshirt',underground:false}],
       releases:[
@@ -401,6 +424,7 @@ function loadLocal(){try{const j=localStorage.getItem(LSK);if(j)return JSON.pars
 function saveLocal(){try{localStorage.setItem(LSK,JSON.stringify(S))}catch(e){}}
 S=loadLocal()||examples();
 for(const k of Object.keys(EMPTY()))if(S[k]==null)S[k]=EMPTY()[k];
+if(S.meta&&S.meta.examples===true&&!S.meta.realSports){const e=examples();S.sports=e.sports;S.betting=e.betting;S.meta.realSports=true;saveLocal()}
 
 /* ================= sync (db per-person, private) ================= */
 const sync={db:null,uid:null,timers:{},writing:{},queued:{},sample:null};
@@ -496,7 +520,7 @@ function exampleBanner(){if(S.meta.examples!==true)return '';return `<div class=
 /* ---------- HOME ---------- */
 function vHome(){
   const now=new Date();const t0=today();
-  const nextGame=S.sports.games.filter(g=>g.status!=='final'&&new Date(g.date)>=addDays(t0,0)).sort((a,b)=>a.date.localeCompare(b.date)).sort((a,b)=>isFollowedTeam(b)-isFollowedTeam(a))[0];
+  const nextGame=S.sports.games.filter(g=>g.status!=='final'&&parseD(g.date)>=addDays(t0,0)).sort((a,b)=>a.date.localeCompare(b.date)).sort((a,b)=>isFollowedTeam(b)-isFollowedTeam(a))[0];
   const cbs=[];S.kpop.groups.forEach(g=>(g.comebacks||[]).forEach(c=>{if(diffDays(c.date)>=0)cbs.push({g,c})}));cbs.sort((a,b)=>a.c.date.localeCompare(b.c.date));
   const relWin=S.hiphop.releases.filter(r=>r.date&&Math.abs(diffDays(r.date))<=14);
   const nextRel=S.hiphop.releases.filter(r=>r.date&&diffDays(r.date)>=0).sort((a,b)=>a.date.localeCompare(b.date))[0];
@@ -620,7 +644,7 @@ function vSports(){
     return `<div class="tile" style="--c:${cvar('sports')}"><div class="k">${esc(t.league)}</div><div class="v">${esc(t.name)}</div><div class="s"><span class="num">${r.w}–${r.l}${r.d?'–'+r.d:''}</span> in logged games</div><div class="s">${nx?`Next: ${nx.home===t.name?'vs '+esc(nx.away):'@ '+esc(nx.home)}, ${rel(nx.date)}`:'No upcoming game logged'}</div><div class="row"><a class="btn sm ghost" href="https://www.espn.com/${ESPN[t.league]||''}/scoreboard" target="_blank" rel="noopener">ESPN scoreboard</a><button class="btn sm ghost" data-act="edit" data-type="team" data-id="${t.id}">Edit</button></div></div>`}).join('')}</div>`:'<div class="empty">Follow a team to see its record and next game here.</div>'}</section>
   <div class="grid2"><section class="sec"><h2>Upcoming</h2>${up.length?`<div class="panel list">${up.map(gameRow).join('')}</div>`:'<div class="empty">No upcoming games logged.</div>'}</section>
   <section class="sec"><h2>Results</h2>${fin.length?`<div class="panel list">${fin.map(gameRow).join('')}</div>`:'<div class="empty">Final scores show up here.</div>'}</section></div>
-  <p class="small faint">Live scores and box scores need a data feed this page can’t reach, so games are logged by you. ESPN links open the live scoreboard for each league.</p>`;
+  <p class="small faint">Live scores need a data feed this page can’t reach. The starter schedule is real (Nov 2026); add new games and final scores yourself. ESPN links open the live scoreboard for each league.</p>`;
 }
 
 /* ---------- BETTING ---------- */

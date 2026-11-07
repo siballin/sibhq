@@ -232,6 +232,18 @@ table.t tr.sub td{background:var(--bg)}
 .trk button[aria-pressed="true"]{border-color:var(--c);color:var(--c);font-weight:600}
 .star{color:var(--c)}
 
+
+.ngrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:10px}
+.ncard{display:flex;flex-direction:column;gap:6px;padding:12px;border-radius:10px;background:var(--surface);border:1px solid var(--line);text-decoration:none;min-width:0}
+.ncard:hover{border-color:var(--ink-3)}
+.ncard.mine{border-color:var(--c);box-shadow:inset 0 0 0 1px var(--c)}
+.nrow{display:flex;align-items:center;gap:8px;min-width:0;color:var(--ink-2)}
+.nrow img{flex:none;object-fit:contain}
+.nrow b{width:40px;flex:none;color:var(--ink)}
+.nrow .nm{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.nrow .sc{font-size:18px;font-weight:600;width:40px;text-align:right;flex:none}
+.nrow.win .sc,.nrow.win b{color:var(--ink);font-weight:700}
+.nst{padding-top:4px;border-top:1px solid var(--line)}
 .toast{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:10px 16px;border-radius:10px;font-size:14px;font-weight:600;z-index:60;box-shadow:var(--shadow)}
 .kbd{font-family:var(--f-mono);font-size:11px;border:1px solid var(--line);border-radius:4px;padding:0 4px;color:var(--ink-3)}
 
@@ -439,7 +451,7 @@ async function initCaps(){
     },()=>setSync('Sync paused — saved on this device')));
   }catch(e){}
 }
-function commit(...keys){if(S.meta.examples){S.meta.examples='kept';keys=[...new Set([...keys,...KEYS,'meta'])]}save(...keys,'meta');render()}
+function commit(...keys){if(keys.includes('sports'))setTimeout(loadTeamScheds,0);if(S.meta.examples){S.meta.examples='kept';keys=[...new Set([...keys,...KEYS,'meta'])]}save(...keys,'meta');render()}
 
 /* ================= Claude lookups ================= */
 async function askJSON(prompt){
@@ -463,7 +475,7 @@ const fmtOdds=o=>o==null||o===''?'—':(o>0?'+':'')+o;
 const isFollowedTeam=g=>S.sports.teams.some(t=>t.name===g.home||t.name===g.away);
 function allEvents(from,to){
   const out=[];const inR=s=>{const d=parseD(s);return d&&d>=from&&d<=to};
-  S.sports.games.forEach(g=>{if(inR(g.date))out.push({date:g.date.slice(0,10),time:g.date,ch:'sports',title:`${g.away} @ ${g.home}`,sub:g.status==='final'?`Final ${g.awayScore}–${g.homeScore}`:`${g.league} · ${fmtT(g.date)}`,mine:isFollowedTeam(g)})});
+  sportsGames().forEach(g=>{if(inR(g.date))out.push({date:g.date.slice(0,10),time:g.date,ch:'sports',title:`${g.away} @ ${g.home}`,sub:g.status==='final'?`Final ${g.awayScore}–${g.homeScore}`:`${g.league} · ${fmtT(g.date)}`,mine:isFollowedTeam(g)})});
   S.hiphop.releases.forEach(r=>{if(inR(r.date))out.push({date:r.date,ch:'hiphop',title:`${r.artist} — ${r.title}`,sub:r.type})});
   S.kpop.groups.forEach(g=>{
     (g.comebacks||[]).forEach(c=>{if(inR(c.date))out.push({date:c.date,ch:'kpop',title:`${g.name}: ${c.title}`,sub:c.kind})});
@@ -493,10 +505,63 @@ const UI={cal:{mode:'month',cursor:today(),sel:iso(today()),filters:new Set(CH.m
 function head(key,title,sub,acts=''){return `<div class="phead"><div><div class="t">${key?chno(key):''}<h1>${esc(title)}</h1></div>${sub?`<p>${sub}</p>`:''}</div><div class="acts">${acts}</div></div>`}
 function exampleBanner(){if(S.meta.examples!==true)return '';return `<div class="banner"><span class="sp"><b>You’re looking at example data.</b> Teams, bets, lists and dates are samples so you can see every feature working. Edit anything to start making it yours.</span><button class="btn sm" data-act="clearEx">Clear examples</button><button class="btn sm ghost" data-act="keepEx">Keep them</button></div>`}
 
+
+/* ================= ESPN NBA feed ================= */
+const ESPN_HOSTS=['https://site.api.espn.com','https://site.web.api.espn.com'];
+const NBA_PATH='/apis/site/v2/sports/basketball/nba';
+const NBA={teams:null,days:{},sched:{},err:'',sel:iso(today()),busy:{},tried:{}};
+async function espn(path){let last;for(const h of ESPN_HOSTS){try{const r=await fetch(h+path,{cache:'no-store'});if(r.ok)return await r.json();last=new Error('HTTP '+r.status)}catch(e){last=e}}throw last||new Error('unreachable')}
+const scoreOf=x=>x==null?'':typeof x==='object'?(x.displayValue??x.value??''):x;
+function normEvent(ev){const c=(ev.competitions||[])[0]||{};const st=((ev.status||c.status)||{}).type||{};
+  const comp=(c.competitors||[]).map(x=>({ha:x.homeAway,id:x.team?.id,abbr:x.team?.abbreviation||'',name:x.team?.displayName||'',logo:x.team?.logo||x.team?.logos?.[0]?.href||'',score:scoreOf(x.score),rec:((x.records||x.record||[])[0]||{}).summary||'',winner:!!x.winner}));
+  const tv=[...new Set([...(c.broadcasts||[]).flatMap(b=>b.names||[]),...(c.broadcasts||[]).map(b=>b.media?.shortName).filter(Boolean),...(c.geoBroadcasts||[]).map(g=>g.media?.shortName).filter(Boolean)])].join(', ');
+  return {id:ev.id,date:ev.date,state:st.state||'pre',completed:!!st.completed,detail:st.shortDetail||st.detail||'',home:comp.find(x=>x.ha==='home')||{},away:comp.find(x=>x.ha==='away')||{},tv,venue:c.venue?.fullName||''}}
+const localDT=s=>{const d=new Date(s);return iso(d)+'T'+String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0')};
+let nbaTeamsP=null;
+function nbaTeams(){if(NBA.teams)return Promise.resolve(NBA.teams);return nbaTeamsP=nbaTeamsP||nbaTeamsLoad().catch(e=>{nbaTeamsP=null;throw e})}
+async function nbaTeamsLoad(){const j=await espn(NBA_PATH+'/teams');
+  NBA.teams=((j.sports||[])[0]?.leagues?.[0]?.teams||[]).map(x=>x.team).filter(Boolean).map(t=>({id:t.id,abbr:t.abbreviation,name:t.displayName,short:t.shortDisplayName,nick:t.name,logo:t.logos?.[0]?.href||''}));return NBA.teams}
+const matchTeam=name=>{const n=String(name||'').toLowerCase().trim();return (NBA.teams||[]).find(t=>[t.name,t.short,t.abbr,t.nick].some(v=>v&&v.toLowerCase()===n))||(NBA.teams||[]).find(t=>n&&(t.name.toLowerCase().includes(n)||(t.nick&&n.includes(t.nick.toLowerCase()))))};
+async function loadDay(d,quiet){if(NBA.busy[d])return;NBA.busy[d]=true;if(!quiet)render();
+  try{const j=await espn(`${NBA_PATH}/scoreboard?dates=${d.replace(/-/g,'')}`);NBA.days[d]=(j.events||[]).map(normEvent);NBA.err=''}
+  catch(e){NBA.err='Couldn’t reach ESPN right now. Your other data is fine — try again in a minute.'}
+  NBA.busy[d]=false;render()}
+async function loadTeamScheds(){
+  const mine=S.sports.teams.filter(t=>t.league==='NBA');if(!mine.length)return;
+  try{await nbaTeams()}catch(e){NBA.err='Couldn’t reach ESPN right now.';render();return}
+  await Promise.all(mine.map(async t=>{const m=matchTeam(t.name);if(!m){NBA.sched[t.name]=null;return}
+    try{const j=await espn(`${NBA_PATH}/teams/${m.id}/schedule?seasontype=2`);NBA.sched[t.name]={team:m,events:(j.events||[]).map(normEvent)}}catch(e){}}));
+  render()}
+function sportsGames(){
+  const out=[];const seen=new Set();
+  Object.entries(NBA.sched).forEach(([,v])=>{if(!v)return;v.events.forEach(e=>{if(seen.has(e.id))return;seen.add(e.id);
+    const fin=e.state==='post';out.push({id:'espn-'+e.id,espn:true,espnId:e.id,league:'NBA',home:e.home.name,away:e.away.name,date:localDT(e.date),status:fin?'final':'scheduled',live:e.state==='in',homeScore:fin?Number(e.home.score):null,awayScore:fin?Number(e.away.score):null})})});
+  const covered=new Set(Object.values(NBA.sched).filter(Boolean).map(v=>v.team.name));
+  S.sports.games.forEach(g=>{if(g.league==='NBA'&&covered.size&&[g.home,g.away].some(n=>covered.has(matchTeam(n)?.name)))return;out.push(g)});
+  return out;
+}
+function nbaSection(){
+  const sel=NBA.sel;const evs=NBA.days[sel];
+  if(!evs&&!NBA.busy[sel]&&!NBA.tried[sel]){NBA.tried[sel]=true;setTimeout(()=>loadDay(sel),0)}
+  const myNames=S.sports.teams.filter(t=>t.league==='NBA').map(t=>matchTeam(t.name)?.name||t.name);
+  const strip=[-1,0,1,2,3,4,5,6].map(n=>{const d=D(n);const lbl=n===-1?'Yesterday':n===0?'Today':n===1?'Tomorrow':parseD(d).toLocaleDateString(undefined,{weekday:'short',day:'numeric'});return `<button class="chip" aria-pressed="${sel===d}" data-act="nbaDay" data-d="${d}">${lbl}</button>`}).join('');
+  const side=(t,showScore)=>`<div class="nrow ${showScore&&t.winner?'win':''}">${t.logo?`<img src="${esc(t.logo)}" alt="" width="26" height="26" loading="lazy" onerror="this.style.visibility='hidden'">`:'<span style="width:26px"></span>'}<b>${esc(t.abbr||t.name)}</b><span class="faint small nm">${esc(t.name)}</span><span class="faint small num">${esc(t.rec)}</span>${showScore?`<span class="num sc">${esc(t.score)}</span>`:''}</div>`;
+  const card=e=>{const mine=myNames.includes(e.home.name)||myNames.includes(e.away.name);const show=e.state!=='pre';
+    const status=e.state==='in'?`<span class="tag c" style="--c:var(--bad)">Live</span> ${esc(e.detail)}`:e.state==='post'?esc(e.detail||'Final'):`${new Date(e.date).toLocaleTimeString(undefined,{hour:'numeric',minute:'2-digit'})}${e.tv?' · '+esc(e.tv):''}`;
+    return `<a class="ncard ${mine?'mine':''}" href="https://www.espn.com/nba/game/_/gameId/${esc(e.id)}" target="_blank" rel="noopener">${side(e.away,show)}${side(e.home,show)}<div class="small muted nst">${status}${mine?' · ★ your team':''}</div></a>`};
+  const list=evs?(evs.length?`<div class="ngrid">${[...evs].sort((a,b)=>(myNames.includes(b.home.name)||myNames.includes(b.away.name))-(myNames.includes(a.home.name)||myNames.includes(a.away.name))||a.date.localeCompare(b.date)).map(card).join('')}</div>`:'<div class="empty">No NBA games on this day.</div>'):(NBA.err?'':'<div class="empty">Loading the NBA schedule…</div>');
+  return `<section class="sec" style="--c:${cvar('sports')}"><h2>NBA schedule <span style="text-transform:none;letter-spacing:0;font-weight:500" class="faint">live from ESPN${evs&&evs.some(e=>e.state==='in')?' · updating every 30s':''}</span></h2>
+    <div class="chips">${strip}<button class="chip" data-act="nbaRefresh">↻ Refresh</button></div>${NBA.err?`<div class="err">${esc(NBA.err)}</div>`:''}${list}</section>`;
+}
+setInterval(()=>{if(document.hidden)return;const v=cur();if(v!=='sports'&&v!=='home')return;
+  const d=NBA.days[NBA.sel];if(d&&d.some(e=>e.state==='in'))loadDay(NBA.sel,true);
+  const t=NBA.days[iso(today())];if(NBA.sel!==iso(today())&&t&&t.some(e=>e.state==='in'))loadDay(iso(today()),true)},30000);
+setInterval(()=>{if(!document.hidden&&Object.values(NBA.sched).some(v=>v&&v.events.some(e=>e.state==='in')))loadTeamScheds()},120000);
+
 /* ---------- HOME ---------- */
 function vHome(){
   const now=new Date();const t0=today();
-  const nextGame=S.sports.games.filter(g=>g.status!=='final'&&new Date(g.date)>=addDays(t0,0)).sort((a,b)=>a.date.localeCompare(b.date)).sort((a,b)=>isFollowedTeam(b)-isFollowedTeam(a))[0];
+  const nextGame=sportsGames().filter(g=>g.status!=='final'&&new Date(g.date)>=addDays(t0,0)).sort((a,b)=>a.date.localeCompare(b.date)).sort((a,b)=>isFollowedTeam(b)-isFollowedTeam(a))[0];
   const cbs=[];S.kpop.groups.forEach(g=>(g.comebacks||[]).forEach(c=>{if(diffDays(c.date)>=0)cbs.push({g,c})}));cbs.sort((a,b)=>a.c.date.localeCompare(b.c.date));
   const relWin=S.hiphop.releases.filter(r=>r.date&&Math.abs(diffDays(r.date))<=14);
   const nextRel=S.hiphop.releases.filter(r=>r.date&&diffDays(r.date)>=0).sort((a,b)=>a.date.localeCompare(b.date))[0];
@@ -522,8 +587,8 @@ function vHome(){
   const nextFor=k=>evs.find(e=>e.ch===k&&diffDays(e.date)>=(k==='anime'?0:0));
   const slot=(b,s)=>b?`<div class="slot"><b>${b}</b>${s?`<span>${s}</span>`:''}</div>`:'<span class="faint small">—</span>';
   const last=(arr,f)=>arr.filter(f).sort((x,y)=>String(y._d).localeCompare(String(x._d)))[0];
-  const todayGame=S.sports.games.find(g=>diffDays(g.date)===0);
-  const lastFinal=S.sports.games.filter(g=>g.status==='final').sort((x,y)=>y.date.localeCompare(x.date))[0];
+  const todayGame=sportsGames().find(g=>diffDays(g.date)===0);
+  const lastFinal=sportsGames().filter(g=>g.status==='final').sort((x,y)=>y.date.localeCompare(x.date))[0];
   const settled=S.betting.bets.filter(b=>b.result!=='open').sort((x,y)=>y.date.localeCompare(x.date))[0];
   const heard=S.hiphop.releases.filter(r=>r.status==='heard').sort((x,y)=>String(y.date).localeCompare(String(x.date)))[0];
   const queued=S.hiphop.releases.filter(r=>r.status==='queued'&&(!r.date||diffDays(r.date)<=0))[0];
@@ -608,19 +673,20 @@ function agendaList(es,showDate){
 /* ---------- SPORTS ---------- */
 function vSports(){
   const L=UI.league;const inL=x=>L==='All'||x.league===L;
-  const games=S.sports.games.filter(inL);
+  const games=sportsGames().filter(inL);
   const up=games.filter(g=>g.status!=='final').sort((a,b)=>a.date.localeCompare(b.date));
   const fin=games.filter(g=>g.status==='final').sort((a,b)=>b.date.localeCompare(a.date));
-  const rec=t=>{let w=0,l=0,d=0;S.sports.games.filter(g=>g.status==='final'&&(g.home===t.name||g.away===t.name)).forEach(g=>{const me=g.home===t.name?g.homeScore:g.awayScore,op=g.home===t.name?g.awayScore:g.homeScore;if(me>op)w++;else if(me<op)l++;else d++});return {w,l,d}};
+  const rec=t=>{let w=0,l=0,d=0;sportsGames().filter(g=>g.status==='final'&&(g.home===t.name||g.away===t.name)).forEach(g=>{const me=g.home===t.name?g.homeScore:g.awayScore,op=g.home===t.name?g.awayScore:g.homeScore;if(me>op)w++;else if(me<op)l++;else d++});return {w,l,d}};
   const gameRow=g=>{const mine=isFollowedTeam(g);const f=g.status==='final';const hw=f&&g.homeScore>g.awayScore,aw=f&&g.awayScore>g.homeScore;
-    return `<div class="li"><span class="tag c" style="--c:${cvar('sports')}">${esc(g.league)}</span><div class="main"><b><span style="${aw?'':'font-weight:500'}">${esc(g.away)}${f?` <span class="num">${g.awayScore}</span>`:''}</span> @ <span style="${hw?'':'font-weight:500'}">${esc(g.home)}${f?` <span class="num">${g.homeScore}</span>`:''}</span></b><span>${f?'Final · ':''}${parseD(g.date).toLocaleDateString(undefined,{weekday:'short',month:'short',day:'numeric'})}${f?'':' · '+fmtT(g.date)}${mine?' · ★ your team':''}</span></div><div class="end"><a class="btn sm ghost" href="https://www.youtube.com/results?search_query=${encodeURIComponent(g.away+' vs '+g.home+' highlights')}" target="_blank" rel="noopener">Highlights</a><button class="btn sm" data-act="edit" data-type="game" data-id="${g.id}">${f?'Edit':'Score'}</button></div></div>`};
+    return `<div class="li"><span class="tag c" style="--c:${cvar('sports')}">${esc(g.league)}</span><div class="main"><b><span style="${aw?'':'font-weight:500'}">${esc(g.away)}${f?` <span class="num">${g.awayScore}</span>`:''}</span> @ <span style="${hw?'':'font-weight:500'}">${esc(g.home)}${f?` <span class="num">${g.homeScore}</span>`:''}</span></b><span>${g.espn?'<span class="tag">ESPN</span> ':''}${f?'Final · ':''}${parseD(g.date).toLocaleDateString(undefined,{weekday:'short',month:'short',day:'numeric'})}${f?'':' · '+fmtT(g.date)}${mine?' · ★ your team':''}</span></div><div class="end"><a class="btn sm ghost" href="https://www.youtube.com/results?search_query=${encodeURIComponent(g.away+' vs '+g.home+' highlights')}" target="_blank" rel="noopener">Highlights</a>${g.espn?`<a class="btn sm" href="https://www.espn.com/nba/game/_/gameId/${g.espnId}" target="_blank" rel="noopener">Gamecast</a>`:`<button class="btn sm" data-act="edit" data-type="game" data-id="${g.id}">${f?'Edit':'Score'}</button>`}</div></div>`};
   return `${head('sports','Sports','Follow teams across leagues, log scores, and keep your records in one place.',`<button class="btn" data-act="add" data-type="team">Follow team</button><button class="btn pri" data-act="add" data-type="game">Add game</button>`)}
   <div class="chips">${['All',...LEAGUES].map(l=>`<button class="chip" aria-pressed="${UI.league===l}" data-act="league" data-l="${l}">${l}</button>`).join('')}</div>
-  <section class="sec"><h2>Your teams</h2>${S.sports.teams.filter(inL).length?`<div class="tiles">${S.sports.teams.filter(inL).map(t=>{const r=rec(t);const nx=S.sports.games.filter(g=>g.status!=='final'&&(g.home===t.name||g.away===t.name)).sort((a,b)=>a.date.localeCompare(b.date))[0];
-    return `<div class="tile" style="--c:${cvar('sports')}"><div class="k">${esc(t.league)}</div><div class="v">${esc(t.name)}</div><div class="s"><span class="num">${r.w}–${r.l}${r.d?'–'+r.d:''}</span> in logged games</div><div class="s">${nx?`Next: ${nx.home===t.name?'vs '+esc(nx.away):'@ '+esc(nx.home)}, ${rel(nx.date)}`:'No upcoming game logged'}</div><div class="row"><a class="btn sm ghost" href="https://www.espn.com/${ESPN[t.league]||''}/scoreboard" target="_blank" rel="noopener">ESPN scoreboard</a><button class="btn sm ghost" data-act="edit" data-type="team" data-id="${t.id}">Edit</button></div></div>`}).join('')}</div>`:'<div class="empty">Follow a team to see its record and next game here.</div>'}</section>
+  ${L==='All'||L==='NBA'?nbaSection():''}
+  <section class="sec"><h2>Your teams</h2>${S.sports.teams.filter(inL).length?`<div class="tiles">${S.sports.teams.filter(inL).map(t=>{const r=rec(t);const nx=sportsGames().filter(g=>g.status!=='final'&&(g.home===t.name||g.away===t.name)).sort((a,b)=>a.date.localeCompare(b.date))[0];
+    return `<div class="tile" style="--c:${cvar('sports')}"><div class="k">${esc(t.league)}</div><div class="v">${esc(t.name)}</div><div class="s"><span class="num">${r.w}–${r.l}${r.d?'–'+r.d:''}</span> ${t.league==='NBA'&&NBA.sched[t.name]?'this season':'in logged games'}</div><div class="s">${nx?`Next: ${nx.home===t.name?'vs '+esc(nx.away):'@ '+esc(nx.home)}, ${rel(nx.date)}`:'No upcoming game logged'}</div><div class="row"><a class="btn sm ghost" href="https://www.espn.com/${ESPN[t.league]||''}/scoreboard" target="_blank" rel="noopener">ESPN scoreboard</a><button class="btn sm ghost" data-act="edit" data-type="team" data-id="${t.id}">Edit</button></div></div>`}).join('')}</div>`:'<div class="empty">Follow a team to see its record and next game here.</div>'}</section>
   <div class="grid2"><section class="sec"><h2>Upcoming</h2>${up.length?`<div class="panel list">${up.map(gameRow).join('')}</div>`:'<div class="empty">No upcoming games logged.</div>'}</section>
   <section class="sec"><h2>Results</h2>${fin.length?`<div class="panel list">${fin.map(gameRow).join('')}</div>`:'<div class="empty">Final scores show up here.</div>'}</section></div>
-  <p class="small faint">Live scores and box scores need a data feed this page can’t reach, so games are logged by you. ESPN links open the live scoreboard for each league.</p>`;
+  <p class="small faint">NBA games come live from ESPN. Other leagues are logged by you for now; ESPN links open each league’s live scoreboard.</p>`;
 }
 
 /* ---------- BETTING ---------- */
@@ -796,7 +862,7 @@ function vForYou(){
 /* ================= forms ================= */
 const F=(k,label,type='text',o={})=>({k,label,type,...o});
 const FORMS={
-  team:{title:'Team',ch:'sports',fields:[F('name','Team name','text',{full:true,req:true}),F('league','League','select',{opts:LEAGUES})]},
+  team:{title:'Team',ch:'sports',fields:[F('name','Team name','text',{full:true,req:true,dl:'nba-teams',hint:'For NBA teams, pick the full name from the list so the real schedule loads'}),F('league','League','select',{opts:LEAGUES})]},
   game:{title:'Game',ch:'sports',fields:[F('league','League','select',{opts:LEAGUES}),F('date','Date & time','datetime-local',{req:true}),F('away','Away team','text',{req:true}),F('home','Home team','text',{req:true}),F('awayScore','Away score','number'),F('homeScore','Home score','number'),F('status','Status','select',{opts:['scheduled','final']})]},
   bet:{title:'Bet',ch:'betting',fields:[F('desc','Pick','text',{full:true,req:true}),F('date','Date','date'),F('sport','Sport','select',{opts:[...LEAGUES,'Other']}),F('odds','Odds (American)','number',{req:true}),F('stake','Stake ($)','number',{req:true}),F('book','Sportsbook'),F('result','Result','select',{opts:['open','win','loss','push']})]},
   artist:{title:'Artist',ch:'hiphop',fields:[F('name','Artist name','text',{full:true,req:true}),F('underground','Track on Underground Radar','checkbox',{full:true})]},
@@ -830,7 +896,7 @@ function openForm(type,item,prefill){
     if(f.type==='select')input=`<select id="${id}" name="${f.k}">${f.opts.map((o,i)=>`<option value="${esc(o)}" ${String(val??'')===String(o)?'selected':''}>${esc(f.labels?f.labels[i]:o)}</option>`).join('')}</select>`;
     else if(f.type==='textarea'||f.type==='lines')input=`<textarea id="${id}" name="${f.k}" rows="${f.type==='lines'?5:4}">${esc(val)}</textarea>`;
     else if(f.type==='checkbox')return `<div class="fld cb ${f.full?'full':''}"><input id="${id}" type="checkbox" name="${f.k}" ${val?'checked':''}><label for="${id}">${esc(f.label)}</label></div>`;
-    else input=`<input id="${id}" name="${f.k}" type="${f.type}" value="${esc(val)}" ${f.req?'required':''} ${f.min!=null?`min="${f.min}"`:''} ${f.max!=null?`max="${f.max}"`:''} ${f.step?`step="${f.step}"`:f.type==='number'?'step="any"':''}>`;
+    else input=`${f.dl&&NBA.teams?`<datalist id="${f.dl}">${NBA.teams.map(t=>`<option value="${esc(t.name)}">`).join('')}</datalist>`:''}<input id="${id}" name="${f.k}" type="${f.type}" value="${esc(val)}" ${f.dl?`list="${f.dl}"`:''} ${f.req?'required':''} ${f.min!=null?`min="${f.min}"`:''} ${f.max!=null?`max="${f.max}"`:''} ${f.step?`step="${f.step}"`:f.type==='number'?'step="any"':''}>`;
     return `<div class="fld ${f.full?'full':''}"><label for="${id}">${esc(f.label)}</label>${input}${f.hint?`<span class="hint">${esc(f.hint)}</span>`:''}</div>`};
   const lk=spec.lookup&&sync.sample?`<div class="ask"><span class="sp">Type a title above, then let Claude fill in the details.</span><button type="button" class="btn sm pri" data-act="lookup">Fill with Claude</button></div><div id="lkmsg" class="small faint"></div>`:'';
   $('#modal-root').innerHTML=`<div class="scrim" data-act="scrim"><form class="modal" id="mform" role="dialog" aria-modal="true" aria-labelledby="mtitle" style="--c:${spec.ch?cvar(spec.ch):'var(--ink)'}">
@@ -933,6 +999,8 @@ const ACT={
   addEvent:()=>openForm('event'),
   delEvent:d=>{S.events=S.events.filter(e=>e.id!==d.id);commit('events')},
   league:d=>{UI.league=d.l;render()},
+  nbaDay:d=>{NBA.sel=d.d;render()},
+  nbaRefresh:()=>{loadDay(NBA.sel);loadTeamScheds()},
   betPeriod:d=>{UI.betPeriod=d.p;render()},
   settle:d=>{const b=find('bet',d.id);b.result=d.r;delete b.ex;commit('betting');toast(`Settled: ${d.r} ${money(profit(b))}`)},
   betExpand:d=>{UI.betOpen=UI.betOpen===d.id?null:d.id;render()},
@@ -981,7 +1049,7 @@ document.addEventListener('click',e=>{if(!e.target.closest('.search'))$('#sres')
 
 function tick(){const n=new Date();$('#clk').textContent=n.toLocaleTimeString(undefined,{hour:'numeric',minute:'2-digit'})+' · '+n.toLocaleDateString(undefined,{weekday:'short'})}
 tick();setInterval(tick,30000);
-render();initCaps();
+render();initCaps();loadTeamScheds();nbaTeams().catch(()=>{});
 </script>
 
 </body></html>
